@@ -14,7 +14,7 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif}
-  .wrap{max-width:1280px;margin:0 auto;padding:24px 16px 48px}
+  .wrap{max-width:1400px;margin:0 auto;padding:24px 16px 48px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
@@ -50,14 +50,15 @@
   th.num{text-align:right}
   td.empty{text-align:center;color:var(--muted);padding:32px}
 
-  input.cell-text,input.cell-num,input.link-in{
+  input.cell-text,input.cell-num,input.cell-date,input.link-in{
     border:1px solid transparent;background:transparent;border-radius:5px;padding:4px 6px;font:inherit;color:var(--ink);
   }
   input.cell-text{width:110px}
   input.cell-num{width:76px;text-align:right;font-variant-numeric:tabular-nums}
+  input.cell-date{width:178px;font-variant-numeric:tabular-nums}
   input.link-in{width:170px;border-color:var(--line);background:#fff}
-  input.cell-text:hover,input.cell-num:hover{border-color:var(--line)}
-  input.cell-text:focus,input.cell-num:focus,input.link-in:focus{background:#fff;border-color:var(--accent);outline:none}
+  input.cell-text:hover,input.cell-num:hover,input.cell-date:hover{border-color:var(--line)}
+  input.cell-text:focus,input.cell-num:focus,input.cell-date:focus,input.link-in:focus{background:#fff;border-color:var(--accent);outline:none}
   input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   input[type=number]{-moz-appearance:textfield}
 
@@ -72,7 +73,12 @@
   .issue-btn:hover{background:var(--hover)}
   .issue-btn.bad{color:var(--bad);font-weight:600}
 
-  select.state{border:0;border-radius:6px;padding:5px 10px;font:inherit;font-weight:500;cursor:pointer}
+  .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:500;font-size:13px}
+  .ts{font-variant-numeric:tabular-nums;color:var(--ink)}
+  .ts.none{color:var(--muted)}
+  .rej{display:inline-block;min-width:20px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;margin-right:4px}
+  .rej.bad{color:var(--bad)}
+
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
   a.open{color:var(--accent);text-decoration:none}
   a.open:hover{text-decoration:underline}
@@ -87,8 +93,10 @@
   .note textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;resize:vertical;min-height:52px}
   .note-meta{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
   .note-meta .at{margin-right:auto}
-  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
   .muted{color:var(--muted)}
+
+  #reportText{width:100%;min-height:340px;border:1px solid var(--line);border-radius:8px;padding:12px;font:13px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--ink);resize:vertical;background:#FBFCFD}
 
   button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
@@ -105,7 +113,7 @@
     <div class="row">
       <input id="q" class="search" type="search" placeholder="Search batch, task, job, QC…">
       <button type="button" class="btn primary" data-action="add-job">+ Add job</button>
-      <button id="export" class="btn" type="button">Export CSV</button>
+      <button id="report" class="btn" type="button">Report</button>
       <button id="backup" class="btn" type="button">Backup</button>
       <button id="restore" class="btn" type="button">Restore</button>
       <input id="restoreFile" type="file" accept="application/json,.json" hidden>
@@ -116,7 +124,7 @@
 
   <section class="card">
     <div class="toolbar">
-      <div class="row"><span class="label">State</span><div class="row" id="statePills"></div></div>
+      <div class="row"><span class="label">Stage</span><div class="row" id="statePills"></div></div>
       <div class="row"><span class="label">QC</span><div class="row" id="qcPills"></div></div>
       <div class="row"><span class="label">Columns</span><div class="row" id="colPills"></div></div>
     </div>
@@ -145,6 +153,23 @@
   </div>
 </dialog>
 
+<dialog id="reportDlg" aria-labelledby="reportTitle">
+  <div class="dlg-head">
+    <div>
+      <h2 id="reportTitle">Report</h2>
+      <div class="sub">Copy and paste this into Zalo, Messenger or email.</div>
+    </div>
+    <button type="button" class="btn small" data-close>Close</button>
+  </div>
+  <div style="padding:14px 18px">
+    <textarea id="reportText" readonly></textarea>
+  </div>
+  <div class="dlg-foot">
+    <span class="sub" id="reportCount"></span>
+    <button type="button" class="btn primary" id="copyReport">Copy</button>
+  </div>
+</dialog>
+
 <script>
 /* =========================================================
    CONFIG — edit these to match your project
@@ -152,17 +177,27 @@
 
 const CONFIG = {
   title: 'My jobs',
-  openUrl: 'https://your-tool.example/jobs/{job}', // {job} is replaced with the job id
+  reportName: 'Dũng',                                // name written in the report header
+  openUrl: 'https://your-tool.example/jobs/{job}',  // {job} is replaced with the job id
   openLabel: 'Open',
 };
 
-// Status pipeline. Order = order of pills.
-const STATES = [
-  { id:'todo',        label:'To do',          color:'#4B5563', tint:'#EEF1F5' },
-  { id:'in_progress', label:'In progress',    color:'#2F5BEA', tint:'#E8EEFD' },
-  { id:'anno_done',   label:'Anno complete',  color:'#0E7C86', tint:'#E0F3F4' },
-  { id:'qc_progress', label:'QC in progress', color:'#B45309', tint:'#FDF0DC' },
-  { id:'qc_done',     label:'QC complete',    color:'#1E7F4F', tint:'#E2F4EA' },
+// Stages. Anno stages are worked out automatically from the annotated count;
+// QC stages and Rework are set by you with the QC status dropdown and the Reject buttons.
+const STAGES = [
+  { id:'todo',        label:'Not started',     color:'#4B5563', tint:'#EEF1F5' },
+  { id:'in_progress', label:'Anno in progress',color:'#2F5BEA', tint:'#E8EEFD' },
+  { id:'anno_done',   label:'Anno complete',   color:'#0E7C86', tint:'#E0F3F4' },
+  { id:'rework',      label:'Rework',          color:'#B42318', tint:'#FDECEA' },
+  { id:'qc_progress', label:'QC in progress',  color:'#B45309', tint:'#FDF0DC' },
+  { id:'qc_done',     label:'QC complete',     color:'#1E7F4F', tint:'#E2F4EA' },
+];
+
+// QC status dropdown options
+const QC_STATUS = [
+  { id:'',            label:'–' },
+  { id:'qc_progress', label:'QC in progress' },
+  { id:'qc_done',     label:'QC complete' },
 ];
 
 // QC reviewers shown as filters and in the QC dropdown.
@@ -171,45 +206,68 @@ const QC_REVIEWERS = ['Huyền', 'Chi', 'Huy', 'Long'];
 // Columns. "visible" = shown when the page first loads.
 // The Columns pills let you turn any of them on or off.
 const COLUMNS = [
-  { key:'no',       label:'No.',         type:'text',     visible:true },
-  { key:'batch',    label:'Batch',       type:'text',     visible:true },
-  { key:'task',     label:'Task',        type:'text',     visible:true },
-  { key:'job',      label:'Job',         type:'text',     visible:true },
-  { key:'qc',       label:'QC',          type:'qc',       visible:true },
-  { key:'frame',    label:'Frame',       type:'num',      visible:true },
-  { key:'trackId',  label:'TrackID',     type:'num',      visible:true },
-  { key:'cuboid',   label:'Cuboid',      type:'num',      visible:true },
-  { key:'progress', label:'Annotating',  type:'progress', visible:true },
-  { key:'issues',   label:'Open issues', type:'issues',   visible:true },
-  { key:'state',    label:'State',       type:'state',    visible:true },
-  { key:'link',     label:'Attach link', type:'link',     visible:true },
-  { key:'open',     label:'Open link',   type:'open',     visible:true },
+  { key:'no',          label:'No.',             type:'text',     visible:true },
+  { key:'batch',       label:'Batch',           type:'text',     visible:true },
+  { key:'task',        label:'Task',            type:'text',     visible:true },
+  { key:'job',         label:'Job',             type:'text',     visible:true },
+  { key:'qc',          label:'QC',              type:'qc',       visible:true },
+  { key:'frame',       label:'Frame',           type:'num',      visible:true },
+  { key:'trackId',     label:'TrackID',         type:'num',      visible:true },
+  { key:'cuboid',      label:'Cuboid',          type:'num',      visible:true },
+  { key:'progress',    label:'Annotating',      type:'progress', visible:true },
+  { key:'issues',      label:'Open issues',     type:'issues',   visible:true },
+  { key:'stage',       label:'Stage',           type:'stage',    visible:true },
+  { key:'qcState',     label:'QC status',       type:'qcstatus', visible:true },
+  { key:'reject',      label:'Reject',          type:'reject',   visible:true },
+  { key:'assignedAt',  label:'Ngày giao',       type:'datetime', visible:true },
+  { key:'completedAt', label:'Ngày hoàn thành', type:'completed',visible:true },
+  { key:'link',        label:'Attach link',     type:'link',     visible:true },
+  { key:'open',        label:'Open link',       type:'open',     visible:true },
 ];
 
 /* =========================================================
    DATA + SAVING
-   The page saves every change to this browser automatically
-   (localStorage), so jobs stay after you reload or come back
-   tomorrow. Use Backup / Restore to keep a copy or move to
-   another computer.
+   Every change is saved to this browser automatically (localStorage).
+   Use Backup / Restore to keep a copy or move to another computer.
    ========================================================= */
 
 const STORAGE_KEY = 'jobReport.v1';
 
 // Used only the first time, when nothing is saved yet.
 const SEED = [
-  { no:1, batch:3, task:2772, job:3269, qc:'Huy', frame:30, trackId:55,  cuboid:1100, annotated:55,  total:55,  state:'anno_done', link:'', notes:[] },
-  { no:2, batch:3, task:2901, job:3398, qc:'Huy', frame:30, trackId:115, cuboid:3000, annotated:115, total:115, state:'anno_done', link:'', notes:[] },
+  { no:1, batch:3, task:2772, job:3269, qc:'Huy', frame:30, trackId:55,  cuboid:1100, annotated:55,  total:55  },
+  { no:2, batch:3, task:2901, job:3398, qc:'Huy', frame:30, trackId:115, cuboid:3000, annotated:115, total:115 },
 ];
 
+// Bring older saved rows up to the current format
+function migrate(rows){
+  return rows.map(r => {
+    const out = { ...r };
+    if (!('qcState' in out)) {
+      out.qcState = out.state === 'qc_done' ? 'qc_done' : out.state === 'qc_progress' ? 'qc_progress' : '';
+    }
+    if (!['', 'qc_progress', 'qc_done'].includes(out.qcState)) out.qcState = '';
+    delete out.state;
+    out.rejects    = Array.isArray(out.rejects) ? out.rejects : [];
+    out.rework     = !!out.rework;
+    out.notes      = Array.isArray(out.notes) ? out.notes : [];
+    out.assignedAt = out.assignedAt || '';
+    out.annoDoneAt = out.annoDoneAt || '';
+    out.qcDoneAt   = out.qcDoneAt || '';
+    out.link       = out.link || '';
+    return out;
+  });
+}
+
 function loadData(){
+  let rows = null;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
+    if (saved) rows = JSON.parse(saved);
   } catch (err) {
     console.warn('Could not read saved data:', err);
   }
-  return JSON.parse(JSON.stringify(SEED));
+  return migrate(rows || JSON.parse(JSON.stringify(SEED)));
 }
 
 function saveData(){
@@ -252,17 +310,43 @@ const $ = sel => document.querySelector(sel);
 const fmt = n => Number(n ?? 0).toLocaleString('en-US');
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const stateOf = id => STATES.find(s => s.id === id) || STATES[0];
+const stageMeta = id => STAGES.find(s => s.id === id) || STAGES[0];
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
-const isNumeric = c => ['num', 'progress', 'issues'].includes(c.type);
-const NUM_FIELDS = ['frame', 'trackId', 'cuboid', 'annotated', 'total'];
+const isNumeric = c => ['num', 'progress', 'issues', 'reject'].includes(c.type);
+const NUM_FIELDS = ['frame', 'trackId', 'cuboid'];
 
 const pctOf = r => r.total ? Math.min(100, r.annotated / r.total * 100) : 0;
+const isAnnoComplete = r => r.total > 0 && r.annotated >= r.total;
 const openCount = r => (r.notes || []).filter(n => !n.done).length;
+const rejectCount = r => (r.rejects || []).length;
 const currentRow = () => DATA.find(r => r.no === openRowNo);
+const completedAt = r => r.qcDoneAt || r.annoDoneAt || '';
+
+// Local time as "YYYY-MM-DDTHH:mm" (same format as <input type="datetime-local">)
+function nowLocal(){
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// "2026-11-23T14:05" -> "23/11/2026 14:05"
+function fmtDate(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || '');
+  return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : '';
+}
+
+// Current stage, worked out from the annotation count and QC / rework fields
+function stageOf(r){
+  if (r.qcState === 'qc_done') return 'qc_done';
+  if (r.qcState === 'qc_progress') return 'qc_progress';
+  if (r.rework) return 'rework';
+  if (isAnnoComplete(r)) return 'anno_done';
+  if (r.annotated > 0) return 'in_progress';
+  return 'todo';
+}
 
 function matches(r){
-  if (ui.states.size && !ui.states.has(r.state)) return false;
+  if (ui.states.size && !ui.states.has(stageOf(r))) return false;
   if (ui.qcs.size && !ui.qcs.has(r.qc || '__none__')) return false;
   if (ui.query) {
     const hay = [r.batch, r.task, r.job, r.qc, r.link].join(' ').toLowerCase();
@@ -283,11 +367,11 @@ function pill({active, attrs, label, count, small}){
 function renderPills(){
   $('#statePills').innerHTML =
     pill({ active: ui.states.size === 0, attrs:'data-action="clear-states"', label:'All', count: DATA.length }) +
-    STATES.map(s => pill({
+    STAGES.map(s => pill({
       active: ui.states.has(s.id),
       attrs:`data-toggle="states" data-value="${esc(s.id)}"`,
       label: s.label,
-      count: DATA.filter(r => r.state === s.id).length,
+      count: DATA.filter(r => stageOf(r) === s.id).length,
     })).join('');
 
   const qcOptions = [...QC_REVIEWERS, '__none__'];
@@ -315,17 +399,20 @@ function renderPills(){
 }
 
 function renderSummary(){
-  const total  = DATA.reduce((a, r) => a + Number(r.total || 0), 0);
-  const done   = DATA.reduce((a, r) => a + Number(r.annotated || 0), 0);
-  const issues = DATA.reduce((a, r) => a + openCount(r), 0);
-  const qcDone = DATA.filter(r => r.state === 'qc_done').length;
-  const pct    = total ? Math.round(done / total * 100) : 0;
+  const total    = DATA.reduce((a, r) => a + Number(r.total || 0), 0);
+  const done     = DATA.reduce((a, r) => a + Number(r.annotated || 0), 0);
+  const issues   = DATA.reduce((a, r) => a + openCount(r), 0);
+  const qcDone   = DATA.filter(r => stageOf(r) === 'qc_done').length;
+  const rejects  = DATA.reduce((a, r) => a + rejectCount(r), 0);
+  const rejJobs  = DATA.filter(r => rejectCount(r) > 0).length;
+  const pct      = total ? Math.round(done / total * 100) : 0;
 
   const stats = [
     [fmt(DATA.length), 'Jobs'],
     [pct + '%', `Annotated (${fmt(done)} / ${fmt(total)})`],
     [fmt(qcDone) + ' / ' + fmt(DATA.length), 'QC complete'],
     [fmt(issues), 'Open issues'],
+    [fmt(rejects), `Rejects (${fmt(rejJobs)} jobs)`],
   ];
   $('#summary').innerHTML = stats.map(([n, l]) =>
     `<div class="card stat"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join('');
@@ -366,12 +453,29 @@ function cell(col, r){
         title="Open notes for this job">${fmt(open)}</button>`;
     }
 
-    case 'state': {
-      const s = stateOf(r.state);
-      return `<select class="state" data-edit="state" ${id} aria-label="State"
-        style="color:${s.color};background:${s.tint}">
-        ${STATES.map(o => `<option value="${o.id}"${o.id === r.state ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}
+    case 'stage': {
+      const s = stageMeta(stageOf(r));
+      return `<span class="badge" style="color:${s.color};background:${s.tint}">${esc(s.label)}</span>`;
+    }
+
+    case 'qcstatus':
+      return `<select class="inline" data-edit="qcState" ${id} aria-label="QC status">
+        ${QC_STATUS.map(o => `<option value="${o.id}"${o.id === (r.qcState || '') ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}
       </select>`;
+
+    case 'reject': {
+      const n = rejectCount(r);
+      return `<span class="rej${n ? ' bad' : ''}">${n}</span>` +
+             `<button type="button" class="btn small" data-reject="${r.no}" title="Send back for rework">+1</button>` +
+             (n ? ` <button type="button" class="btn small" data-reject-undo="${r.no}" title="Remove the last reject">−1</button>` : '');
+    }
+
+    case 'datetime':
+      return `<input class="cell-date" type="datetime-local" data-edit="assignedAt" ${id} ${aria} value="${esc(r.assignedAt || '')}">`;
+
+    case 'completed': {
+      const t = fmtDate(completedAt(r));
+      return t ? `<span class="ts">${t}</span>` : `<span class="ts none">–</span>`;
     }
 
     case 'link':
@@ -463,16 +567,117 @@ function addNote(){
   render();
 }
 
+/* ----- Report ----- */
+
+function reportLine(r){
+  const pct = pctOf(r);
+  const stage = stageOf(r);
+  const annoText = isAnnoComplete(r) ? 'Anno xong' : `Anno ${pct.toFixed(0)}%`;
+  const qcText = {
+    qc_done: 'QC xong',
+    qc_progress: 'QC đang làm',
+    rework: 'Rework',
+    anno_done: 'chờ QC',
+  }[stage] || '';
+
+  const parts = [
+    `Task ${r.task || '–'} - Job ${r.job || '–'}`,
+    `TrackID ${r.trackId ?? 0}`,
+    `Cuboid ${r.cuboid ?? 0}`,
+    annoText,
+    qcText,
+    `Reject ${rejectCount(r)} lần`,
+    `Giao: ${fmtDate(r.assignedAt) || '–'}`,
+    `Hoàn thành: ${fmtDate(completedAt(r)) || '–'}`,
+  ].filter(Boolean);
+
+  return '- ' + parts.join(' | ');
+}
+
+function buildReport(){
+  if (!DATA.length) return '';
+
+  const groups = new Map();
+  DATA.forEach(r => {
+    const key = String(r.batch ?? '').trim() || '–';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  });
+
+  const batches = [...groups.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const blocks = batches.map(b =>
+    [`Batch ${b} - ${CONFIG.reportName}`, ...groups.get(b).map(reportLine)].join('\n'));
+
+  const sum = key => DATA.reduce((a, r) => a + Number(r[key] || 0), 0);
+  const rejects = DATA.reduce((a, r) => a + rejectCount(r), 0);
+  const totals = `Tổng: ${DATA.length} job · TrackID ${sum('trackId')} · Cuboid ${sum('cuboid')} · Reject ${rejects} lần`;
+
+  return blocks.join('\n\n') + '\n\n' + totals;
+}
+
+function openReport(){
+  $('#reportText').value = buildReport() || 'No jobs yet.';
+  $('#reportCount').textContent = `${DATA.length} jobs`;
+  $('#reportDlg').showModal();
+}
+
+async function copyReport(){
+  const box = $('#reportText');
+  const btn = $('#copyReport');
+  try {
+    await navigator.clipboard.writeText(box.value);
+  } catch (err) {
+    box.select();
+    document.execCommand('copy');
+  }
+  btn.textContent = 'Copied ✓';
+  setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+}
+
 /* =========================================================
    DATA ACTIONS
    ========================================================= */
+
+function setQcStatus(row, value){
+  const now = nowLocal();
+  row.qcState = value;
+  if (value === 'qc_done') {
+    if (!row.qcDoneAt) row.qcDoneAt = now;
+    row.rework = false;
+  } else if (value === 'qc_progress') {
+    row.qcDoneAt = '';
+    row.rework = false;
+  } else {
+    row.qcDoneAt = '';
+  }
+}
+
+function rejectJob(no){
+  const row = DATA.find(r => r.no === no);
+  if (!row) return;
+  row.rejects.push(nowLocal());
+  row.rework = true;
+  row.qcState = '';
+  row.qcDoneAt = '';
+  render();
+}
+
+function undoReject(no){
+  const row = DATA.find(r => r.no === no);
+  if (!row || !row.rejects.length) return;
+  row.rejects.pop();
+  if (!row.rejects.length) row.rework = false;
+  render();
+}
 
 function addJob(){
   const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
   DATA.push({
     no, batch:'', task:'', job:'', qc:null,
     frame:0, trackId:0, cuboid:0, annotated:0, total:0,
-    state:'todo', link:'', notes:[],
+    qcState:'', rework:false, rejects:[],
+    link:'', notes:[],
+    assignedAt: nowLocal(), annoDoneAt:'', qcDoneAt:'',
   });
 
   // Clear filters and search so the new row is visible
@@ -510,14 +715,16 @@ function backupData(){
    EVENTS
    ========================================================= */
 
-// Table and page buttons: notes, delete, add, pill toggles, resets
+// Table and page buttons
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes]');
+  const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes],[data-reject],[data-reject-undo]');
   if (!b) return;
 
-  if (b.dataset.notes !== undefined) { openNotes(Number(b.dataset.notes)); return; }
-  if (b.dataset.delete !== undefined) { deleteJob(Number(b.dataset.delete)); return; }
-  if (b.dataset.action === 'add-job') { addJob(); return; }
+  if (b.dataset.notes !== undefined)      { openNotes(Number(b.dataset.notes)); return; }
+  if (b.dataset.delete !== undefined)     { deleteJob(Number(b.dataset.delete)); return; }
+  if (b.dataset.reject !== undefined)     { rejectJob(Number(b.dataset.reject)); return; }
+  if (b.dataset.rejectUndo !== undefined) { undoReject(Number(b.dataset.rejectUndo)); return; }
+  if (b.dataset.action === 'add-job')     { addJob(); return; }
 
   if (b.dataset.toggle) {
     const set = ui[b.dataset.toggle];
@@ -544,10 +751,24 @@ document.addEventListener('change', e => {
   const field = el.dataset.edit;
   const value = el.value;
 
-  if (field === 'qc')                  row.qc = value || null;
-  else if (field === 'state')          row.state = value;
-  else if (NUM_FIELDS.includes(field)) row[field] = Math.max(0, Number(value) || 0);
-  else                                 row[field] = value.trim();
+  if (field === 'qcState') {
+    setQcStatus(row, value);
+  } else if (field === 'qc') {
+    row.qc = value || null;
+  } else if (field === 'assignedAt') {
+    row.assignedAt = value;
+  } else if (field === 'annotated' || field === 'total') {
+    // Stamp the time when annotation first reaches 100%, clear it if it drops below
+    const wasComplete = isAnnoComplete(row);
+    row[field] = Math.max(0, Number(value) || 0);
+    const nowComplete = isAnnoComplete(row);
+    if (!wasComplete && nowComplete) row.annoDoneAt = nowLocal();
+    if (wasComplete && !nowComplete) row.annoDoneAt = '';
+  } else if (NUM_FIELDS.includes(field)) {
+    row[field] = Math.max(0, Number(value) || 0);
+  } else {
+    row[field] = value.trim();
+  }
 
   render();
 });
@@ -581,8 +802,15 @@ dlg.addEventListener('click', e => {
 });
 
 $('#addNote').addEventListener('click', addNote);
-
 dlg.addEventListener('close', () => { openRowNo = null; render(); });
+
+// Report dialog
+const reportDlg = $('#reportDlg');
+$('#report').addEventListener('click', openReport);
+$('#copyReport').addEventListener('click', copyReport);
+reportDlg.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) reportDlg.close();
+});
 
 $('#q').addEventListener('input', e => { ui.query = e.target.value; renderTable(); });
 
@@ -599,30 +827,12 @@ $('#restoreFile').addEventListener('change', async e => {
     const rows = Array.isArray(parsed) ? parsed : parsed.data;
     if (!Array.isArray(rows)) throw new Error('No job list found in this file.');
     if (!confirm(`Replace the current ${DATA.length} jobs with ${rows.length} jobs from the backup?`)) return;
-    DATA = rows;
+    DATA = migrate(rows);
     syncNoteSeq();
     render();
   } catch (err) {
     alert('Could not restore: ' + err.message);
   }
-});
-
-// CSV export of the current filtered view and visible columns
-$('#export').addEventListener('click', () => {
-  const cols = COLUMNS.filter(c => ui.cols.has(c.key) && c.type !== 'open');
-  const rows = DATA.filter(matches);
-  const lines = [cols.map(c => c.label)].concat(rows.map(r => cols.map(c => {
-    if (c.type === 'progress') return `${r.annotated}/${r.total} (${pctOf(r).toFixed(0)}%)`;
-    if (c.type === 'issues')   return openCount(r);
-    if (c.type === 'state')    return stateOf(r.state).label;
-    return r[c.key] ?? '';
-  })));
-  const csv = lines.map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = 'job-report.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
 });
 
 render();
