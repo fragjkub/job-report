@@ -106,6 +106,9 @@
       <input id="q" class="search" type="search" placeholder="Search batch, task, job, QC…">
       <button type="button" class="btn primary" data-action="add-job">+ Add job</button>
       <button id="export" class="btn" type="button">Export CSV</button>
+      <button id="backup" class="btn" type="button">Backup</button>
+      <button id="restore" class="btn" type="button">Restore</button>
+      <input id="restoreFile" type="file" accept="application/json,.json" hidden>
     </div>
   </header>
 
@@ -183,11 +186,41 @@ const COLUMNS = [
   { key:'open',     label:'Open link',   type:'open',     visible:true },
 ];
 
-// Add, edit and delete rows right on the page.
-// Each row can hold notes (shown as open issues when unresolved).
-const DATA = [
+/* =========================================================
+   DATA + SAVING
+   The page saves every change to this browser automatically
+   (localStorage), so jobs stay after you reload or come back
+   tomorrow. Use Backup / Restore to keep a copy or move to
+   another computer.
+   ========================================================= */
 
+const STORAGE_KEY = 'jobReport.v1';
+
+// Used only the first time, when nothing is saved yet.
+const SEED = [
+  { no:1, batch:3, task:2772, job:3269, qc:'Huy', frame:30, trackId:55,  cuboid:1100, annotated:55,  total:55,  state:'anno_done', link:'', notes:[] },
+  { no:2, batch:3, task:2901, job:3398, qc:'Huy', frame:30, trackId:115, cuboid:3000, annotated:115, total:115, state:'anno_done', link:'', notes:[] },
 ];
+
+function loadData(){
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (err) {
+    console.warn('Could not read saved data:', err);
+  }
+  return JSON.parse(JSON.stringify(SEED));
+}
+
+function saveData(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  } catch (err) {
+    console.warn('Could not save data:', err);
+  }
+}
+
+let DATA = loadData();
 
 /* =========================================================
    STATE
@@ -204,6 +237,12 @@ const ui = {
 
 let openRowNo = null;   // job whose notes dialog is open
 let noteSeq = 0;        // id counter for notes
+
+function syncNoteSeq(){
+  noteSeq = DATA.reduce((m, r) =>
+    Math.max(m, ...(r.notes || []).map(n => Number(n.id) || 0)), 0);
+}
+syncNoteSeq();
 
 /* =========================================================
    HELPERS
@@ -377,6 +416,7 @@ function render(){
   renderSummary();
   renderPills();
   renderTable();
+  saveData();
 }
 
 /* ----- Notes dialog ----- */
@@ -455,6 +495,15 @@ function deleteJob(no){
   if (!confirm(`Delete job ${label}?`)) return;
   DATA.splice(i, 1);
   render();
+}
+
+function backupData(){
+  const payload = { version: 1, exportedAt: new Date().toISOString(), data: DATA };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+  a.download = `job-report-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 /* =========================================================
@@ -536,6 +585,27 @@ $('#addNote').addEventListener('click', addNote);
 dlg.addEventListener('close', () => { openRowNo = null; render(); });
 
 $('#q').addEventListener('input', e => { ui.query = e.target.value; renderTable(); });
+
+// Backup and restore
+$('#backup').addEventListener('click', backupData);
+$('#restore').addEventListener('click', () => $('#restoreFile').click());
+
+$('#restoreFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const parsed = JSON.parse(await file.text());
+    const rows = Array.isArray(parsed) ? parsed : parsed.data;
+    if (!Array.isArray(rows)) throw new Error('No job list found in this file.');
+    if (!confirm(`Replace the current ${DATA.length} jobs with ${rows.length} jobs from the backup?`)) return;
+    DATA = rows;
+    syncNoteSeq();
+    render();
+  } catch (err) {
+    alert('Could not restore: ' + err.message);
+  }
+});
 
 // CSV export of the current filtered view and visible columns
 $('#export').addEventListener('click', () => {
