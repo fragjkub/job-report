@@ -10,11 +10,11 @@
   :root{
     --bg:#F2F4F7; --surface:#FFFFFF; --ink:#16202B; --muted:#657386;
     --line:#DCE2EA; --hover:#F7F9FC; --head:#FAFBFC;
-    --accent:#2F5BEA; --accent-tint:#EEF3FE; --ok:#1E9E5A; --bad:#D6403A;
+    --accent:#2F5BEA; --accent-tint:#EEF3FE; --ok:#1E9E5A; --bad:#D6403A; --danger:#B42318;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif}
-  .wrap{max-width:1200px;margin:0 auto;padding:24px 16px 48px}
+  .wrap{max-width:1280px;margin:0 auto;padding:24px 16px 48px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
@@ -35,27 +35,41 @@
   .pill.on{border-color:var(--accent);color:var(--accent);background:var(--accent-tint)}
   .pill.small{font-size:12px;padding:3px 9px}
 
-  .search{margin-left:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;min-width:220px;background:#fff}
+  .search{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;min-width:220px;background:#fff}
   .btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.danger{color:var(--danger);border-color:#F3C4C0}
+  .btn.small{padding:4px 9px;font-size:12px}
 
   .tablewrap{overflow-x:auto}
   table{width:100%;border-collapse:collapse}
-  th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
   th{font-size:12px;color:var(--muted);font-weight:500;background:var(--head);position:sticky;top:0}
   tbody tr:hover td{background:var(--hover)}
   .num{text-align:right;font-variant-numeric:tabular-nums}
   th.num{text-align:right}
   td.empty{text-align:center;color:var(--muted);padding:32px}
 
+  input.cell-text,input.cell-num,input.link-in{
+    border:1px solid transparent;background:transparent;border-radius:5px;padding:4px 6px;font:inherit;color:var(--ink);
+  }
+  input.cell-text{width:110px}
+  input.cell-num{width:76px;text-align:right;font-variant-numeric:tabular-nums}
+  input.link-in{width:170px;border-color:var(--line);background:#fff}
+  input.cell-text:hover,input.cell-num:hover{border-color:var(--line)}
+  input.cell-text:focus,input.cell-num:focus,input.link-in:focus{background:#fff;border-color:var(--accent);outline:none}
+  input.cell-num.bad{color:var(--bad);font-weight:600}
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+
+  .prog{display:inline-flex;align-items:center;gap:4px}
+  .prog .sep{color:var(--muted)}
   .bar{display:inline-block;width:110px;height:6px;background:#E8ECF1;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:8px}
   .bar i{display:block;height:100%;background:var(--accent)}
   .bar.done i{background:var(--ok)}
 
-  .issues.bad{color:var(--bad);font-weight:600}
-
   select.state{border:0;border-radius:6px;padding:5px 10px;font:inherit;font-weight:500;cursor:pointer}
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
-  .link-in{border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;width:170px;background:#fff}
   a.open{color:var(--accent);text-decoration:none}
   a.open:hover{text-decoration:underline}
 
@@ -73,6 +87,7 @@
     </div>
     <div class="row">
       <input id="q" class="search" type="search" placeholder="Search batch, task, job, QC…">
+      <button type="button" class="btn primary" data-action="add-job">+ Add job</button>
       <button id="export" class="btn" type="button">Export CSV</button>
     </div>
   </header>
@@ -116,10 +131,10 @@ const STATES = [
 ];
 
 // QC reviewers shown as filters and in the QC dropdown.
-const QC_REVIEWERS = ['V.Anh', 'Huyền', 'Chị', 'Huy', 'Long'];
+const QC_REVIEWERS = ['V.Anh', 'Huyền', 'Chi', 'Huy', 'Long'];
 
-// Columns. "visible" = shown when the page first loads. The Columns pills
-// let you turn any of them on or off, and all of them can be turned off.
+// Columns. "visible" = shown when the page first loads.
+// The Columns pills let you turn any of them on or off.
 const COLUMNS = [
   { key:'no',       label:'No.',         type:'text',     visible:true },
   { key:'batch',    label:'Batch',       type:'text',     visible:true },
@@ -136,14 +151,14 @@ const COLUMNS = [
   { key:'open',     label:'Open link',   type:'open',     visible:true },
 ];
 
-// Sample data. Replace with your own rows or load JSON with fetch().
+// Sample data. Add, edit and delete rows right on the page.
 const DATA = [
-  { no:1, batch:3, task:2881, job:3378, qc:null,      frame:30, trackId:155, cuboid:3077, annotated:75,  total:155, issues:106, state:'in_progress', link:'' },
-  { no:2, batch:2, task:2684, job:3184, qc:'V.Anh',    frame:15, trackId:363, cuboid:3178, annotated:363, total:363, issues:345, state:'qc_done',     link:'' },
-  { no:3, batch:3, task:2787, job:3284, qc:'V.Anh',    frame:30, trackId:34,  cuboid:814,  annotated:34,  total:34,  issues:14,  state:'qc_done',     link:'' },
-  { no:4, batch:3, task:2933, job:3430, qc:'V.Anh',    frame:30, trackId:69,  cuboid:1247, annotated:69,  total:69,  issues:0,   state:'qc_done',     link:'' },
-  { no:5, batch:4, task:3010, job:3511, qc:'Huy',      frame:30, trackId:210, cuboid:1620, annotated:210, total:210, issues:22,  state:'qc_progress', link:'' },
-  { no:6, batch:4, task:3011, job:3512, qc:null,       frame:30, trackId:88,  cuboid:402,  annotated:88,  total:88,  issues:0,   state:'anno_done',   link:'' },
+  { no:1, batch:3, task:2881, job:3378, qc:null,   frame:30, trackId:155, cuboid:3077, annotated:75,  total:155, issues:106, state:'in_progress', link:'' },
+  { no:2, batch:2, task:2684, job:3184, qc:'V.Anh', frame:15, trackId:363, cuboid:3178, annotated:363, total:363, issues:345, state:'qc_done',     link:'' },
+  { no:3, batch:3, task:2787, job:3284, qc:'V.Anh', frame:30, trackId:34,  cuboid:814,  annotated:34,  total:34,  issues:14,  state:'qc_done',     link:'' },
+  { no:4, batch:3, task:2933, job:3430, qc:'V.Anh', frame:30, trackId:69,  cuboid:1247, annotated:69,  total:69,  issues:0,   state:'qc_done',     link:'' },
+  { no:5, batch:4, task:3010, job:3511, qc:'Huy',   frame:30, trackId:210, cuboid:1620, annotated:210, total:210, issues:22,  state:'qc_progress', link:'' },
+  { no:6, batch:4, task:3011, job:3512, qc:null,    frame:30, trackId:88,  cuboid:402,  annotated:88,  total:88,  issues:0,   state:'anno_done',   link:'' },
 ];
 
 /* =========================================================
@@ -169,6 +184,8 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stateOf = id => STATES.find(s => s.id === id) || STATES[0];
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
+const isNumeric = c => ['num', 'progress', 'issues'].includes(c.type);
+const NUM_FIELDS = ['frame', 'trackId', 'cuboid', 'annotated', 'total', 'issues'];
 
 function matches(r){
   if (ui.states.size && !ui.states.has(r.state)) return false;
@@ -213,13 +230,13 @@ function renderPills(){
     }).join('');
 
   $('#colPills').innerHTML =
-    pill({ active: false, attrs:'data-action="cols-all" small', label:'Show all', small:true }) +
-    pill({ active: false, attrs:'data-action="cols-none" small', label:'Hide all', small:true }) +
+    pill({ active: false, small:true, attrs:'data-action="cols-all"', label:'Show all' }) +
+    pill({ active: false, small:true, attrs:'data-action="cols-none"', label:'Hide all' }) +
     COLUMNS.map(c => pill({
       active: ui.cols.has(c.key),
+      small: true,
       attrs:`data-toggle="cols" data-value="${esc(c.key)}"`,
       label: c.label || 'Open link',
-      small: true,
     })).join('');
 }
 
@@ -241,41 +258,51 @@ function renderSummary(){
 }
 
 function cell(col, r){
+  const id = `data-id="${r.no}"`;
+  const aria = `aria-label="${esc(col.label)}"`;
+
   switch (col.type) {
+    case 'text':
+      if (col.key === 'no') return fmt(r.no);
+      return `<input class="cell-text" type="text" data-edit="${col.key}" ${id} ${aria} value="${esc(r[col.key])}">`;
+
+    case 'num':
+      return `<input class="cell-num" type="number" min="0" data-edit="${col.key}" ${id} ${aria} value="${esc(r[col.key])}">`;
+
     case 'qc':
-      return `<select class="inline" data-edit="qc" data-id="${r.no}" aria-label="QC reviewer">
+      return `<select class="inline" data-edit="qc" ${id} aria-label="QC reviewer">
         <option value="">–</option>
         ${QC_REVIEWERS.map(n => `<option${n === r.qc ? ' selected' : ''}>${esc(n)}</option>`).join('')}
       </select>`;
 
     case 'progress': {
       const pct = r.total ? Math.min(100, r.annotated / r.total * 100) : 0;
-      return `<span class="num">${fmt(r.annotated)} /${fmt(r.total)}</span>` +
+      return `<span class="prog">` +
+               `<input class="cell-num" type="number" min="0" data-edit="annotated" ${id} aria-label="Annotated" value="${esc(r.annotated)}">` +
+               `<span class="sep">/</span>` +
+               `<input class="cell-num" type="number" min="0" data-edit="total" ${id} aria-label="Total" value="${esc(r.total)}">` +
+             `</span>` +
              `<span class="bar${pct >= 100 ? ' done' : ''}"><i style="width:${pct.toFixed(1)}%"></i></span>`;
     }
 
     case 'issues':
-      return `<span class="issues${r.issues > 0 ? ' bad' : ''}">${fmt(r.issues)}</span>`;
+      return `<input class="cell-num${r.issues > 0 ? ' bad' : ''}" type="number" min="0" data-edit="issues" ${id} ${aria} value="${esc(r.issues)}">`;
 
     case 'state': {
       const s = stateOf(r.state);
-      return `<select class="state" data-edit="state" data-id="${r.no}" aria-label="State"
+      return `<select class="state" data-edit="state" ${id} aria-label="State"
         style="color:${s.color};background:${s.tint}">
         ${STATES.map(o => `<option value="${o.id}"${o.id === r.state ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}
       </select>`;
     }
 
     case 'link':
-      return `<input class="link-in" type="url" data-edit="link" data-id="${r.no}"
-        value="${esc(r.link)}" placeholder="Paste link" aria-label="Attach link">` +
+      return `<input class="link-in" type="url" data-edit="link" ${id} value="${esc(r.link)}" placeholder="Paste link" aria-label="Attach link">` +
         (r.link ? ` <a class="open" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener">↗</a>` : '');
 
     case 'open':
       return `<a class="open" href="${esc(CONFIG.openUrl.replace('{job}', encodeURIComponent(r.job)))}"
         target="_blank" rel="noopener">${esc(CONFIG.openLabel)} →</a>`;
-
-    case 'num':
-      return fmt(r[col.key]);
 
     default:
       return esc(r[col.key] ?? '–');
@@ -291,13 +318,16 @@ function renderTable(){
     $('#body').innerHTML = `<tr><td class="empty">No columns selected. Click a column above to show it.</td></tr>`;
   } else {
     $('#head').innerHTML = cols.map(c =>
-      `<th class="${c.type === 'num' ? 'num' : ''}">${esc(c.label)}</th>`).join('');
+      `<th class="${isNumeric(c) ? 'num' : ''}">${esc(c.label)}</th>`).join('') + '<th></th>';
 
-    $('#body').innerHTML = rows.length
-      ? rows.map(r => `<tr>${cols.map(c =>
-          `<td class="${['num','progress','issues'].includes(c.type) ? 'num' : ''}">${cell(c, r)}</td>`
-        ).join('')}</tr>`).join('')
-      : `<tr><td colspan="${cols.length}" class="empty">No jobs match these filters.</td></tr>`;
+    const body = rows.map(r =>
+      `<tr>${cols.map(c => `<td class="${isNumeric(c) ? 'num' : ''}">${cell(c, r)}</td>`).join('')}` +
+      `<td><button type="button" class="btn danger small" data-delete="${r.no}">Delete</button></td></tr>`
+    ).join('');
+
+    $('#body').innerHTML = rows.length ? body
+      : `<tr><td colspan="${cols.length + 1}" class="empty">${
+          DATA.length ? 'No jobs match these filters.' : 'No jobs yet. Click “+ Add job” to start.'}</td></tr>`;
   }
 
   $('#count').textContent = `Showing ${rows.length} of ${DATA.length} jobs · ${cols.length} columns`;
@@ -311,13 +341,50 @@ function render(){
 }
 
 /* =========================================================
+   DATA ACTIONS
+   ========================================================= */
+
+function addJob(){
+  const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
+  DATA.push({
+    no, batch:'', task:'', job:'', qc:null,
+    frame:0, trackId:0, cuboid:0, annotated:0, total:0, issues:0,
+    state:'todo', link:'',
+  });
+
+  // Clear filters and search so the new row is visible
+  ui.states.clear();
+  ui.qcs.clear();
+  ui.query = '';
+  $('#q').value = '';
+
+  render();
+
+  const first = document.querySelector(`[data-edit="batch"][data-id="${no}"]`) ||
+                document.querySelector(`[data-edit][data-id="${no}"]`);
+  if (first) first.focus();
+}
+
+function deleteJob(no){
+  const i = DATA.findIndex(r => r.no === no);
+  if (i === -1) return;
+  const label = DATA[i].job || `No. ${no}`;
+  if (!confirm(`Delete job ${label}?`)) return;
+  DATA.splice(i, 1);
+  render();
+}
+
+/* =========================================================
    EVENTS
    ========================================================= */
 
-// Pills: toggle on/off, or run a reset action
+// Buttons: delete, add, pill toggles, reset actions
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-action],[data-toggle]');
+  const b = e.target.closest('[data-action],[data-toggle],[data-delete]');
   if (!b) return;
+
+  if (b.dataset.delete !== undefined) { deleteJob(Number(b.dataset.delete)); return; }
+  if (b.dataset.action === 'add-job') { addJob(); return; }
 
   if (b.dataset.toggle) {
     const set = ui[b.dataset.toggle];
@@ -334,14 +401,21 @@ document.addEventListener('click', e => {
   render();
 });
 
-// Inline edits: state, QC reviewer, attach link
+// Editing any field in the table (text, numbers, QC, state, link)
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]');
   if (!el) return;
   const row = DATA.find(r => r.no === Number(el.dataset.id));
   if (!row) return;
+
   const field = el.dataset.edit;
-  row[field] = field === 'qc' ? (el.value || null) : el.value.trim();
+  const value = el.value;
+
+  if (field === 'qc')                 row.qc = value || null;
+  else if (field === 'state')         row.state = value;
+  else if (NUM_FIELDS.includes(field)) row[field] = Math.max(0, Number(value) || 0);
+  else                                row[field] = value.trim();
+
   render();
 });
 
