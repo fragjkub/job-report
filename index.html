@@ -9,7 +9,7 @@
 <style>
   :root{
     --bg:#F2F4F7; --surface:#FFFFFF; --ink:#16202B; --muted:#657386;
-    --line:#DCE2EA; --hover:#F7F9FC; --head:#FAFBFC;
+    --line:#DCE2EA; --hover:#F7F9FC; --head:#FAFBFC; --field:#EEF1F5;
     --accent:#2F5BEA; --accent-tint:#EEF3FE; --ok:#1E9E5A; --bad:#D6403A; --danger:#B42318;
   }
   *{box-sizing:border-box}
@@ -50,15 +50,13 @@
   th.num{text-align:right}
   td.empty{text-align:center;color:var(--muted);padding:32px}
 
-  input.cell-text,input.cell-num,input.cell-date,input.link-in{
+  input.cell-text,input.cell-num{
     border:1px solid transparent;background:transparent;border-radius:5px;padding:4px 6px;font:inherit;color:var(--ink);
   }
   input.cell-text{width:110px}
   input.cell-num{width:76px;text-align:right;font-variant-numeric:tabular-nums}
-  input.cell-date{width:178px;font-variant-numeric:tabular-nums}
-  input.link-in{width:170px;border-color:var(--line);background:#fff}
-  input.cell-text:hover,input.cell-num:hover,input.cell-date:hover{border-color:var(--line)}
-  input.cell-text:focus,input.cell-num:focus,input.cell-date:focus,input.link-in:focus{background:#fff;border-color:var(--accent);outline:none}
+  input.cell-text:hover,input.cell-num:hover{border-color:var(--line)}
+  input.cell-text:focus,input.cell-num:focus{background:#fff;border-color:var(--accent);outline:none}
   input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   input[type=number]{-moz-appearance:textfield}
 
@@ -76,12 +74,19 @@
   .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:500;font-size:13px}
   .ts{font-variant-numeric:tabular-nums;color:var(--ink)}
   .ts.none{color:var(--muted)}
-  .rej{display:inline-block;min-width:20px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;margin-right:4px}
-  .rej.bad{color:var(--bad)}
 
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
-  a.open{color:var(--accent);text-decoration:none}
+
+  /* Open link: Open button, plus a grey box that appears on hover to edit the link */
+  .linkcell{display:inline-flex;align-items:center;gap:8px}
+  a.open{color:var(--accent);text-decoration:none;font-weight:500}
   a.open:hover{text-decoration:underline}
+  .addlink{color:var(--muted);text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
+  .linkbox{display:none;width:260px;border:1px solid transparent;background:var(--field);border-radius:6px;padding:5px 8px;font:inherit;color:var(--ink)}
+  .linkcell:hover .linkbox,
+  .linkcell:focus-within .linkbox,
+  .linkcell.editing .linkbox{display:inline-block}
+  .linkbox:focus{background:#fff;border-color:var(--accent);outline:none}
 
   dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(580px,92vw);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.2)}
   dialog::backdrop{background:rgba(16,24,40,.35)}
@@ -177,20 +182,18 @@
 
 const CONFIG = {
   title: 'My jobs',
-  reportName: 'Dũng',                                // name written in the report header
-  openUrl: 'https://your-tool.example/jobs/{job}',  // {job} is replaced with the job id
-  openLabel: 'Open',
+  reportName: 'Dũng',   // name written in the report header
+  openLabel: 'Open',    // text of the link button in the "Open link" column
 };
 
-// Stages. Anno stages are worked out automatically from the annotated count;
-// QC stages and Rework are set by you with the QC status dropdown and the Reject buttons.
+// Stages. Anno stages come from the annotated count (automatic).
+// QC stages are set with the QC status dropdown.
 const STAGES = [
-  { id:'todo',        label:'Not started',     color:'#4B5563', tint:'#EEF1F5' },
-  { id:'in_progress', label:'Anno in progress',color:'#2F5BEA', tint:'#E8EEFD' },
-  { id:'anno_done',   label:'Anno complete',   color:'#0E7C86', tint:'#E0F3F4' },
-  { id:'rework',      label:'Rework',          color:'#B42318', tint:'#FDECEA' },
-  { id:'qc_progress', label:'QC in progress',  color:'#B45309', tint:'#FDF0DC' },
-  { id:'qc_done',     label:'QC complete',     color:'#1E7F4F', tint:'#E2F4EA' },
+  { id:'todo',        label:'Not started',      color:'#4B5563', tint:'#EEF1F5' },
+  { id:'in_progress', label:'Anno in progress', color:'#2F5BEA', tint:'#E8EEFD' },
+  { id:'anno_done',   label:'Anno complete',    color:'#0E7C86', tint:'#E0F3F4' },
+  { id:'qc_progress', label:'QC in progress',   color:'#B45309', tint:'#FDF0DC' },
+  { id:'qc_done',     label:'QC complete',      color:'#1E7F4F', tint:'#E2F4EA' },
 ];
 
 // QC status dropdown options
@@ -218,11 +221,9 @@ const COLUMNS = [
   { key:'issues',      label:'Open issues',     type:'issues',   visible:true },
   { key:'stage',       label:'Stage',           type:'stage',    visible:true },
   { key:'qcState',     label:'QC status',       type:'qcstatus', visible:true },
-  { key:'reject',      label:'Reject',          type:'reject',   visible:true },
-  { key:'assignedAt',  label:'Ngày giao',       type:'datetime', visible:true },
+  { key:'assignedAt',  label:'Ngày giao',       type:'assigned', visible:true },
   { key:'completedAt', label:'Ngày hoàn thành', type:'completed',visible:true },
-  { key:'link',        label:'Attach link',     type:'link',     visible:true },
-  { key:'open',        label:'Open link',       type:'open',     visible:true },
+  { key:'link',        label:'Open link',       type:'link',     visible:true },
 ];
 
 /* =========================================================
@@ -248,12 +249,12 @@ function migrate(rows){
     }
     if (!['', 'qc_progress', 'qc_done'].includes(out.qcState)) out.qcState = '';
     delete out.state;
-    out.rejects    = Array.isArray(out.rejects) ? out.rejects : [];
-    out.rework     = !!out.rework;
+    delete out.rejects;
+    delete out.rework;
+    delete out.qcDoneAt;
     out.notes      = Array.isArray(out.notes) ? out.notes : [];
     out.assignedAt = out.assignedAt || '';
     out.annoDoneAt = out.annoDoneAt || '';
-    out.qcDoneAt   = out.qcDoneAt || '';
     out.link       = out.link || '';
     return out;
   });
@@ -312,17 +313,15 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stageMeta = id => STAGES.find(s => s.id === id) || STAGES[0];
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
-const isNumeric = c => ['num', 'progress', 'issues', 'reject'].includes(c.type);
+const isNumeric = c => ['num', 'progress', 'issues'].includes(c.type);
 const NUM_FIELDS = ['frame', 'trackId', 'cuboid'];
 
 const pctOf = r => r.total ? Math.min(100, r.annotated / r.total * 100) : 0;
 const isAnnoComplete = r => r.total > 0 && r.annotated >= r.total;
 const openCount = r => (r.notes || []).filter(n => !n.done).length;
-const rejectCount = r => (r.rejects || []).length;
 const currentRow = () => DATA.find(r => r.no === openRowNo);
-const completedAt = r => r.qcDoneAt || r.annoDoneAt || '';
 
-// Local time as "YYYY-MM-DDTHH:mm" (same format as <input type="datetime-local">)
+// Local time as "YYYY-MM-DDTHH:mm"
 function nowLocal(){
   const d = new Date();
   const p = n => String(n).padStart(2, '0');
@@ -335,11 +334,10 @@ function fmtDate(s){
   return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : '';
 }
 
-// Current stage, worked out from the annotation count and QC / rework fields
+// Current stage, from the annotated count and the QC status
 function stageOf(r){
   if (r.qcState === 'qc_done') return 'qc_done';
   if (r.qcState === 'qc_progress') return 'qc_progress';
-  if (r.rework) return 'rework';
   if (isAnnoComplete(r)) return 'anno_done';
   if (r.annotated > 0) return 'in_progress';
   return 'todo';
@@ -394,25 +392,22 @@ function renderPills(){
       active: ui.cols.has(c.key),
       small: true,
       attrs:`data-toggle="cols" data-value="${esc(c.key)}"`,
-      label: c.label || 'Open link',
+      label: c.label,
     })).join('');
 }
 
 function renderSummary(){
-  const total    = DATA.reduce((a, r) => a + Number(r.total || 0), 0);
-  const done     = DATA.reduce((a, r) => a + Number(r.annotated || 0), 0);
-  const issues   = DATA.reduce((a, r) => a + openCount(r), 0);
-  const qcDone   = DATA.filter(r => stageOf(r) === 'qc_done').length;
-  const rejects  = DATA.reduce((a, r) => a + rejectCount(r), 0);
-  const rejJobs  = DATA.filter(r => rejectCount(r) > 0).length;
-  const pct      = total ? Math.round(done / total * 100) : 0;
+  const total  = DATA.reduce((a, r) => a + Number(r.total || 0), 0);
+  const done   = DATA.reduce((a, r) => a + Number(r.annotated || 0), 0);
+  const issues = DATA.reduce((a, r) => a + openCount(r), 0);
+  const qcDone = DATA.filter(r => stageOf(r) === 'qc_done').length;
+  const pct    = total ? Math.round(done / total * 100) : 0;
 
   const stats = [
     [fmt(DATA.length), 'Jobs'],
     [pct + '%', `Annotated (${fmt(done)} / ${fmt(total)})`],
     [fmt(qcDone) + ' / ' + fmt(DATA.length), 'QC complete'],
     [fmt(issues), 'Open issues'],
-    [fmt(rejects), `Rejects (${fmt(rejJobs)} jobs)`],
   ];
   $('#summary').innerHTML = stats.map(([n, l]) =>
     `<div class="card stat"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join('');
@@ -463,28 +458,24 @@ function cell(col, r){
         ${QC_STATUS.map(o => `<option value="${o.id}"${o.id === (r.qcState || '') ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}
       </select>`;
 
-    case 'reject': {
-      const n = rejectCount(r);
-      return `<span class="rej${n ? ' bad' : ''}">${n}</span>` +
-             `<button type="button" class="btn small" data-reject="${r.no}" title="Send back for rework">+1</button>` +
-             (n ? ` <button type="button" class="btn small" data-reject-undo="${r.no}" title="Remove the last reject">−1</button>` : '');
+    case 'assigned':
+      return r.assignedAt
+        ? `<span class="ts">${fmtDate(r.assignedAt)}</span>`
+        : `<span class="ts none">–</span>`;
+
+    case 'completed':
+      return r.annoDoneAt
+        ? `<span class="ts">${fmtDate(r.annoDoneAt)}</span>`
+        : `<span class="ts none">–</span>`;
+
+    case 'link': {
+      const open = r.link
+        ? `<a class="open" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener">${esc(CONFIG.openLabel)} →</a>`
+        : `<span class="addlink" data-focus-link="${r.no}">Add link</span>`;
+      return `<span class="linkcell">${open}` +
+             `<input class="linkbox" type="url" data-edit="link" ${id} value="${esc(r.link)}" placeholder="Paste link…" aria-label="Link">` +
+             `</span>`;
     }
-
-    case 'datetime':
-      return `<input class="cell-date" type="datetime-local" data-edit="assignedAt" ${id} ${aria} value="${esc(r.assignedAt || '')}">`;
-
-    case 'completed': {
-      const t = fmtDate(completedAt(r));
-      return t ? `<span class="ts">${t}</span>` : `<span class="ts none">–</span>`;
-    }
-
-    case 'link':
-      return `<input class="link-in" type="url" data-edit="link" ${id} value="${esc(r.link)}" placeholder="Paste link" aria-label="Attach link">` +
-        (r.link ? ` <a class="open" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener">↗</a>` : '');
-
-    case 'open':
-      return `<a class="open" href="${esc(CONFIG.openUrl.replace('{job}', encodeURIComponent(r.job)))}"
-        target="_blank" rel="noopener">${esc(CONFIG.openLabel)} →</a>`;
 
     default:
       return esc(r[col.key] ?? '–');
@@ -571,14 +562,12 @@ function addNote(){
 
 function reportLine(r){
   const pct = pctOf(r);
-  const stage = stageOf(r);
   const annoText = isAnnoComplete(r) ? 'Anno xong' : `Anno ${pct.toFixed(0)}%`;
   const qcText = {
     qc_done: 'QC xong',
     qc_progress: 'QC đang làm',
-    rework: 'Rework',
     anno_done: 'chờ QC',
-  }[stage] || '';
+  }[stageOf(r)] || '';
 
   const parts = [
     `Task ${r.task || '–'} - Job ${r.job || '–'}`,
@@ -586,9 +575,8 @@ function reportLine(r){
     `Cuboid ${r.cuboid ?? 0}`,
     annoText,
     qcText,
-    `Reject ${rejectCount(r)} lần`,
     `Giao: ${fmtDate(r.assignedAt) || '–'}`,
-    `Hoàn thành: ${fmtDate(completedAt(r)) || '–'}`,
+    `Hoàn thành: ${fmtDate(r.annoDoneAt) || '–'}`,
   ].filter(Boolean);
 
   return '- ' + parts.join(' | ');
@@ -609,8 +597,7 @@ function buildReport(){
     [`Batch ${b} - ${CONFIG.reportName}`, ...groups.get(b).map(reportLine)].join('\n'));
 
   const sum = key => DATA.reduce((a, r) => a + Number(r[key] || 0), 0);
-  const rejects = DATA.reduce((a, r) => a + rejectCount(r), 0);
-  const totals = `Tổng: ${DATA.length} job · TrackID ${sum('trackId')} · Cuboid ${sum('cuboid')} · Reject ${rejects} lần`;
+  const totals = `Tổng: ${DATA.length} job · TrackID ${sum('trackId')} · Cuboid ${sum('cuboid')}`;
 
   return blocks.join('\n\n') + '\n\n' + totals;
 }
@@ -638,46 +625,14 @@ async function copyReport(){
    DATA ACTIONS
    ========================================================= */
 
-function setQcStatus(row, value){
-  const now = nowLocal();
-  row.qcState = value;
-  if (value === 'qc_done') {
-    if (!row.qcDoneAt) row.qcDoneAt = now;
-    row.rework = false;
-  } else if (value === 'qc_progress') {
-    row.qcDoneAt = '';
-    row.rework = false;
-  } else {
-    row.qcDoneAt = '';
-  }
-}
-
-function rejectJob(no){
-  const row = DATA.find(r => r.no === no);
-  if (!row) return;
-  row.rejects.push(nowLocal());
-  row.rework = true;
-  row.qcState = '';
-  row.qcDoneAt = '';
-  render();
-}
-
-function undoReject(no){
-  const row = DATA.find(r => r.no === no);
-  if (!row || !row.rejects.length) return;
-  row.rejects.pop();
-  if (!row.rejects.length) row.rework = false;
-  render();
-}
-
 function addJob(){
   const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
   DATA.push({
     no, batch:'', task:'', job:'', qc:null,
     frame:0, trackId:0, cuboid:0, annotated:0, total:0,
-    qcState:'', rework:false, rejects:[],
-    link:'', notes:[],
-    assignedAt: nowLocal(), annoDoneAt:'', qcDoneAt:'',
+    qcState:'', link:'', notes:[],
+    assignedAt: nowLocal(),   // Ngày giao = the moment the job is added
+    annoDoneAt: '',           // Ngày hoàn thành = the moment it reaches 100%
   });
 
   // Clear filters and search so the new row is visible
@@ -717,14 +672,12 @@ function backupData(){
 
 // Table and page buttons
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes],[data-reject],[data-reject-undo]');
+  const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes]');
   if (!b) return;
 
-  if (b.dataset.notes !== undefined)      { openNotes(Number(b.dataset.notes)); return; }
-  if (b.dataset.delete !== undefined)     { deleteJob(Number(b.dataset.delete)); return; }
-  if (b.dataset.reject !== undefined)     { rejectJob(Number(b.dataset.reject)); return; }
-  if (b.dataset.rejectUndo !== undefined) { undoReject(Number(b.dataset.rejectUndo)); return; }
-  if (b.dataset.action === 'add-job')     { addJob(); return; }
+  if (b.dataset.notes !== undefined)  { openNotes(Number(b.dataset.notes)); return; }
+  if (b.dataset.delete !== undefined) { deleteJob(Number(b.dataset.delete)); return; }
+  if (b.dataset.action === 'add-job') { addJob(); return; }
 
   if (b.dataset.toggle) {
     const set = ui[b.dataset.toggle];
@@ -741,6 +694,16 @@ document.addEventListener('click', e => {
   render();
 });
 
+// "Add link" text: open the link box for that row
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-focus-link]');
+  if (!t) return;
+  const cell = t.closest('.linkcell');
+  const box = cell && cell.querySelector('.linkbox');
+  if (cell) cell.classList.add('editing');
+  if (box) box.focus();
+});
+
 // Editing fields in the table
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]');
@@ -752,13 +715,11 @@ document.addEventListener('change', e => {
   const value = el.value;
 
   if (field === 'qcState') {
-    setQcStatus(row, value);
+    row.qcState = value;
   } else if (field === 'qc') {
     row.qc = value || null;
-  } else if (field === 'assignedAt') {
-    row.assignedAt = value;
   } else if (field === 'annotated' || field === 'total') {
-    // Stamp the time when annotation first reaches 100%, clear it if it drops below
+    // Stamp Ngày hoàn thành when annotation first reaches 100%; clear it if it drops below
     const wasComplete = isAnnoComplete(row);
     row[field] = Math.max(0, Number(value) || 0);
     const nowComplete = isAnnoComplete(row);
