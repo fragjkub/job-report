@@ -58,7 +58,6 @@
   input.link-in{width:170px;border-color:var(--line);background:#fff}
   input.cell-text:hover,input.cell-num:hover{border-color:var(--line)}
   input.cell-text:focus,input.cell-num:focus,input.link-in:focus{background:#fff;border-color:var(--accent);outline:none}
-  input.cell-num.bad{color:var(--bad);font-weight:600}
   input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   input[type=number]{-moz-appearance:textfield}
 
@@ -67,13 +66,31 @@
   .bar{display:inline-block;width:110px;height:6px;background:#E8ECF1;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:8px}
   .bar i{display:block;height:100%;background:var(--accent)}
   .bar.done i{background:var(--ok)}
+  .pct{display:inline-block;min-width:44px;margin-left:8px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+
+  .issue-btn{background:none;border:0;padding:2px 6px;font:inherit;color:var(--ink);cursor:pointer;border-radius:4px;text-decoration:underline dotted var(--muted);text-underline-offset:3px;font-variant-numeric:tabular-nums}
+  .issue-btn:hover{background:var(--hover)}
+  .issue-btn.bad{color:var(--bad);font-weight:600}
 
   select.state{border:0;border-radius:6px;padding:5px 10px;font:inherit;font-weight:500;cursor:pointer}
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
   a.open{color:var(--accent);text-decoration:none}
   a.open:hover{text-decoration:underline}
 
-  button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(580px,92vw);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.2)}
+  dialog::backdrop{background:rgba(16,24,40,.35)}
+  .dlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .dlg-head h2{font-size:16px;font-weight:600;margin:0}
+  #dlgBody{padding:14px 18px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow:auto}
+  .note{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
+  .note.done{opacity:.6}
+  .note textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;resize:vertical;min-height:52px}
+  .note-meta{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .note-meta .at{margin-right:auto}
+  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .muted{color:var(--muted)}
+
+  button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 </head>
@@ -109,6 +126,21 @@
   </section>
 
 </div>
+
+<dialog id="notesDlg" aria-labelledby="dlgTitle">
+  <div class="dlg-head">
+    <div>
+      <h2 id="dlgTitle"></h2>
+      <div class="sub" id="dlgSub"></div>
+    </div>
+    <button type="button" class="btn small" data-close>Close</button>
+  </div>
+  <div id="dlgBody"></div>
+  <div class="dlg-foot">
+    <span class="sub">Unresolved notes are counted as open issues.</span>
+    <button type="button" class="btn primary" id="addNote">+ Add note</button>
+  </div>
+</dialog>
 
 <script>
 /* =========================================================
@@ -151,7 +183,8 @@ const COLUMNS = [
   { key:'open',     label:'Open link',   type:'open',     visible:true },
 ];
 
-// Sample data. Add, edit and delete rows right on the page.
+// Add, edit and delete rows right on the page.
+// Each row can hold notes (shown as open issues when unresolved).
 const DATA = [
 
 ];
@@ -169,6 +202,9 @@ const ui = {
   query: '',
 };
 
+let openRowNo = null;   // job whose notes dialog is open
+let noteSeq = 0;        // id counter for notes
+
 /* =========================================================
    HELPERS
    ========================================================= */
@@ -180,7 +216,11 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
 const stateOf = id => STATES.find(s => s.id === id) || STATES[0];
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
 const isNumeric = c => ['num', 'progress', 'issues'].includes(c.type);
-const NUM_FIELDS = ['frame', 'trackId', 'cuboid', 'annotated', 'total', 'issues'];
+const NUM_FIELDS = ['frame', 'trackId', 'cuboid', 'annotated', 'total'];
+
+const pctOf = r => r.total ? Math.min(100, r.annotated / r.total * 100) : 0;
+const openCount = r => (r.notes || []).filter(n => !n.done).length;
+const currentRow = () => DATA.find(r => r.no === openRowNo);
 
 function matches(r){
   if (ui.states.size && !ui.states.has(r.state)) return false;
@@ -238,7 +278,7 @@ function renderPills(){
 function renderSummary(){
   const total  = DATA.reduce((a, r) => a + Number(r.total || 0), 0);
   const done   = DATA.reduce((a, r) => a + Number(r.annotated || 0), 0);
-  const issues = DATA.reduce((a, r) => a + Number(r.issues || 0), 0);
+  const issues = DATA.reduce((a, r) => a + openCount(r), 0);
   const qcDone = DATA.filter(r => r.state === 'qc_done').length;
   const pct    = total ? Math.round(done / total * 100) : 0;
 
@@ -271,17 +311,21 @@ function cell(col, r){
       </select>`;
 
     case 'progress': {
-      const pct = r.total ? Math.min(100, r.annotated / r.total * 100) : 0;
+      const pct = pctOf(r);
       return `<span class="prog">` +
                `<input class="cell-num" type="number" min="0" data-edit="annotated" ${id} aria-label="Annotated" value="${esc(r.annotated)}">` +
                `<span class="sep">/</span>` +
                `<input class="cell-num" type="number" min="0" data-edit="total" ${id} aria-label="Total" value="${esc(r.total)}">` +
              `</span>` +
-             `<span class="bar${pct >= 100 ? ' done' : ''}"><i style="width:${pct.toFixed(1)}%"></i></span>`;
+             `<span class="bar${pct >= 100 ? ' done' : ''}"><i style="width:${pct.toFixed(1)}%"></i></span>` +
+             `<span class="pct">${pct.toFixed(0)}%</span>`;
     }
 
-    case 'issues':
-      return `<input class="cell-num${r.issues > 0 ? ' bad' : ''}" type="number" min="0" data-edit="issues" ${id} ${aria} value="${esc(r.issues)}">`;
+    case 'issues': {
+      const open = openCount(r);
+      return `<button type="button" class="issue-btn${open > 0 ? ' bad' : ''}" data-notes="${r.no}"
+        title="Open notes for this job">${fmt(open)}</button>`;
+    }
 
     case 'state': {
       const s = stateOf(r.state);
@@ -335,6 +379,50 @@ function render(){
   renderTable();
 }
 
+/* ----- Notes dialog ----- */
+
+function renderNotes(){
+  const r = currentRow();
+  if (!r) return;
+  const notes = r.notes || [];
+  $('#dlgTitle').textContent = `Notes · Job ${r.job || r.no}`;
+  $('#dlgSub').textContent = `${openCount(r)} open · ${notes.length} total`;
+  $('#dlgBody').innerHTML = notes.length
+    ? notes.map(n => `
+        <div class="note${n.done ? ' done' : ''}">
+          <textarea data-note="${n.id}" data-field="text" rows="2"
+            placeholder="Describe the issue: frame, track ID, object, what to fix…">${esc(n.text)}</textarea>
+          <div class="note-meta">
+            <label><input type="checkbox" data-note="${n.id}" data-field="done" ${n.done ? 'checked' : ''}> Resolved</label>
+            <span class="at">${esc(n.at)}</span>
+            <button type="button" class="btn danger small" data-note-del="${n.id}">Delete</button>
+          </div>
+        </div>`).join('')
+    : `<div class="muted">No notes yet. Click “+ Add note” to write one.</div>`;
+}
+
+function openNotes(no){
+  openRowNo = no;
+  renderNotes();
+  $('#notesDlg').showModal();
+}
+
+function addNote(){
+  const r = currentRow();
+  if (!r) return;
+  r.notes = r.notes || [];
+  r.notes.push({
+    id: ++noteSeq,
+    text: '',
+    done: false,
+    at: new Date().toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }),
+  });
+  renderNotes();
+  const boxes = $('#dlgBody').querySelectorAll('textarea');
+  if (boxes.length) boxes[boxes.length - 1].focus();
+  render();
+}
+
 /* =========================================================
    DATA ACTIONS
    ========================================================= */
@@ -343,8 +431,8 @@ function addJob(){
   const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
   DATA.push({
     no, batch:'', task:'', job:'', qc:null,
-    frame:0, trackId:0, cuboid:0, annotated:0, total:0, issues:0,
-    state:'todo', link:'',
+    frame:0, trackId:0, cuboid:0, annotated:0, total:0,
+    state:'todo', link:'', notes:[],
   });
 
   // Clear filters and search so the new row is visible
@@ -373,11 +461,12 @@ function deleteJob(no){
    EVENTS
    ========================================================= */
 
-// Buttons: delete, add, pill toggles, reset actions
+// Table and page buttons: notes, delete, add, pill toggles, resets
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-action],[data-toggle],[data-delete]');
+  const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes]');
   if (!b) return;
 
+  if (b.dataset.notes !== undefined) { openNotes(Number(b.dataset.notes)); return; }
   if (b.dataset.delete !== undefined) { deleteJob(Number(b.dataset.delete)); return; }
   if (b.dataset.action === 'add-job') { addJob(); return; }
 
@@ -396,7 +485,7 @@ document.addEventListener('click', e => {
   render();
 });
 
-// Editing any field in the table (text, numbers, QC, state, link)
+// Editing fields in the table
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]');
   if (!el) return;
@@ -406,13 +495,45 @@ document.addEventListener('change', e => {
   const field = el.dataset.edit;
   const value = el.value;
 
-  if (field === 'qc')                 row.qc = value || null;
-  else if (field === 'state')         row.state = value;
+  if (field === 'qc')                  row.qc = value || null;
+  else if (field === 'state')          row.state = value;
   else if (NUM_FIELDS.includes(field)) row[field] = Math.max(0, Number(value) || 0);
-  else                                row[field] = value.trim();
+  else                                 row[field] = value.trim();
 
   render();
 });
+
+// Editing notes in the dialog
+const dlg = $('#notesDlg');
+
+dlg.addEventListener('change', e => {
+  const el = e.target.closest('[data-note]');
+  const r = currentRow();
+  if (!el || !r) return;
+  const note = (r.notes || []).find(n => String(n.id) === el.dataset.note);
+  if (!note) return;
+
+  if (el.dataset.field === 'done') note.done = el.checked;
+  else note.text = el.value.trim();
+
+  renderNotes();
+  render();
+});
+
+dlg.addEventListener('click', e => {
+  const r = currentRow();
+  if (e.target.closest('[data-close]')) { dlg.close(); return; }
+  const del = e.target.closest('[data-note-del]');
+  if (del && r) {
+    r.notes = r.notes.filter(n => String(n.id) !== del.dataset.noteDel);
+    renderNotes();
+    render();
+  }
+});
+
+$('#addNote').addEventListener('click', addNote);
+
+dlg.addEventListener('close', () => { openRowNo = null; render(); });
 
 $('#q').addEventListener('input', e => { ui.query = e.target.value; renderTable(); });
 
@@ -421,7 +542,8 @@ $('#export').addEventListener('click', () => {
   const cols = COLUMNS.filter(c => ui.cols.has(c.key) && c.type !== 'open');
   const rows = DATA.filter(matches);
   const lines = [cols.map(c => c.label)].concat(rows.map(r => cols.map(c => {
-    if (c.type === 'progress') return `${r.annotated}/${r.total}`;
+    if (c.type === 'progress') return `${r.annotated}/${r.total} (${pctOf(r).toFixed(0)}%)`;
+    if (c.type === 'issues')   return openCount(r);
     if (c.type === 'state')    return stateOf(r.state).label;
     return r[c.key] ?? '';
   })));
