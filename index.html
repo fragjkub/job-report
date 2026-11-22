@@ -13,10 +13,7 @@
     --accent:#2F5BEA; --accent-tint:#EEF3FE; --ok:#1E9E5A; --bad:#D6403A;
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;
-  }
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif}
   .wrap{max-width:1200px;margin:0 auto;padding:24px 16px 48px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -31,19 +28,14 @@
   .stat .l{color:var(--muted);font-size:12px}
 
   .toolbar{padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
-  .label{color:var(--muted);font-size:12px;width:44px;flex:none}
+  .label{color:var(--muted);font-size:12px;width:56px;flex:none}
 
-  .pill{
-    border:1px solid var(--line);background:#fff;color:var(--ink);
-    border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer;
-  }
+  .pill{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
   .pill b{font-weight:600;font-variant-numeric:tabular-nums}
   .pill.on{border-color:var(--accent);color:var(--accent);background:var(--accent-tint)}
+  .pill.small{font-size:12px;padding:3px 9px}
 
-  .search{
-    margin-left:auto;border:1px solid var(--line);border-radius:8px;
-    padding:6px 10px;font:inherit;min-width:220px;background:#fff;
-  }
+  .search{margin-left:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;min-width:220px;background:#fff}
   .btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer}
 
   .tablewrap{overflow-x:auto}
@@ -61,17 +53,13 @@
 
   .issues.bad{color:var(--bad);font-weight:600}
 
-  select.state{
-    border:0;border-radius:6px;padding:5px 10px;font:inherit;font-weight:500;cursor:pointer;
-  }
+  select.state{border:0;border-radius:6px;padding:5px 10px;font:inherit;font-weight:500;cursor:pointer}
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
   .link-in{border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;width:170px;background:#fff}
   a.open{color:var(--accent);text-decoration:none}
   a.open:hover{text-decoration:underline}
 
-  button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{
-    outline:2px solid var(--accent);outline-offset:2px;
-  }
+  button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 </head>
@@ -95,6 +83,7 @@
     <div class="toolbar">
       <div class="row"><span class="label">State</span><div class="row" id="statePills"></div></div>
       <div class="row"><span class="label">QC</span><div class="row" id="qcPills"></div></div>
+      <div class="row"><span class="label">Columns</span><div class="row" id="colPills"></div></div>
     </div>
     <div class="tablewrap">
       <table>
@@ -117,7 +106,7 @@ const CONFIG = {
   openLabel: 'Open',
 };
 
-// Status pipeline. Order = order of pills. Add, rename or remove freely.
+// Status pipeline. Order = order of pills.
 const STATES = [
   { id:'todo',        label:'To do',          color:'#4B5563', tint:'#EEF1F5' },
   { id:'in_progress', label:'In progress',    color:'#2F5BEA', tint:'#E8EEFD' },
@@ -127,10 +116,10 @@ const STATES = [
 ];
 
 // QC reviewers shown as filters and in the QC dropdown.
-const QC_REVIEWERS = ['V.Anh', 'Anh Nam', 'Huy', 'Chị Huyền'];
+const QC_REVIEWERS = ['V.Anh', 'Huyền', 'Chị', 'Huy', 'Long'];
 
-// Columns. Set visible:false to hide one. Reorder to change layout.
-// type: text | num | qc | progress | issues | state | link | open
+// Columns. "visible" = shown when the page first loads. The Columns pills
+// let you turn any of them on or off, and all of them can be turned off.
 const COLUMNS = [
   { key:'no',       label:'No.',         type:'text',     visible:true },
   { key:'batch',    label:'Batch',       type:'text',     visible:true },
@@ -144,11 +133,10 @@ const COLUMNS = [
   { key:'issues',   label:'Open issues', type:'issues',   visible:true },
   { key:'state',    label:'State',       type:'state',    visible:true },
   { key:'link',     label:'Attach link', type:'link',     visible:true },
-  { key:'open',     label:'',            type:'open',     visible:true },
+  { key:'open',     label:'Open link',   type:'open',     visible:true },
 ];
 
 // Sample data. Replace with your own rows or load JSON with fetch().
-// annotated / total feed the progress bar; total is usually the TrackID count.
 const DATA = [
   { no:1, batch:3, task:2881, job:3378, qc:null,      frame:30, trackId:155, cuboid:3077, annotated:75,  total:155, issues:106, state:'in_progress', link:'' },
   { no:2, batch:2, task:2684, job:3184, qc:'V.Anh',    frame:15, trackId:363, cuboid:3178, annotated:363, total:363, issues:345, state:'qc_done',     link:'' },
@@ -159,23 +147,32 @@ const DATA = [
 ];
 
 /* =========================================================
-   STATE + HELPERS
+   STATE
+   Filters are multi-select: click to turn on, click again to turn off.
+   Empty filter = no restriction. Empty columns = empty table.
    ========================================================= */
 
-const ui = { state:'all', qc:'all', query:'' };
+const ui = {
+  states: new Set(),
+  qcs: new Set(),
+  cols: new Set(COLUMNS.filter(c => c.visible).map(c => c.key)),
+  query: '',
+};
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
 
 const $ = sel => document.querySelector(sel);
 const fmt = n => Number(n ?? 0).toLocaleString('en-US');
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stateOf = id => STATES.find(s => s.id === id) || STATES[0];
-const visibleCols = () => COLUMNS.filter(c => c.visible);
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
 
 function matches(r){
-  if (ui.state !== 'all' && r.state !== ui.state) return false;
-  if (ui.qc === '__none__' && r.qc) return false;
-  if (ui.qc !== 'all' && ui.qc !== '__none__' && r.qc !== ui.qc) return false;
+  if (ui.states.size && !ui.states.has(r.state)) return false;
+  if (ui.qcs.size && !ui.qcs.has(r.qc || '__none__')) return false;
   if (ui.query) {
     const hay = [r.batch, r.task, r.job, r.qc, r.link].join(' ').toLowerCase();
     if (!hay.includes(ui.query.toLowerCase())) return false;
@@ -187,20 +184,43 @@ function matches(r){
    RENDER
    ========================================================= */
 
-function pill(group, value, label, count){
-  const on = ui[group] === value ? ' on' : '';
-  return `<button type="button" class="pill${on}" data-group="${group}" data-value="${esc(value)}">${esc(label)} <b>${count}</b></button>`;
+function pill({active, attrs, label, count, small}){
+  return `<button type="button" class="pill${small ? ' small' : ''}${active ? ' on' : ''}" ${attrs}>` +
+         `${esc(label)}${count !== undefined ? ` <b>${count}</b>` : ''}</button>`;
 }
 
 function renderPills(){
   $('#statePills').innerHTML =
-    pill('state', 'all', 'All', DATA.length) +
-    STATES.map(s => pill('state', s.id, s.label, DATA.filter(r => r.state === s.id).length)).join('');
+    pill({ active: ui.states.size === 0, attrs:'data-action="clear-states"', label:'All', count: DATA.length }) +
+    STATES.map(s => pill({
+      active: ui.states.has(s.id),
+      attrs:`data-toggle="states" data-value="${esc(s.id)}"`,
+      label: s.label,
+      count: DATA.filter(r => r.state === s.id).length,
+    })).join('');
 
+  const qcOptions = [...QC_REVIEWERS, '__none__'];
   $('#qcPills').innerHTML =
-    pill('qc', 'all', 'All', DATA.length) +
-    QC_REVIEWERS.map(n => pill('qc', n, n, DATA.filter(r => r.qc === n).length)).join('') +
-    pill('qc', '__none__', 'Unassigned', DATA.filter(r => !r.qc).length);
+    pill({ active: ui.qcs.size === 0, attrs:'data-action="clear-qcs"', label:'All', count: DATA.length }) +
+    qcOptions.map(n => {
+      const isNone = n === '__none__';
+      return pill({
+        active: ui.qcs.has(n),
+        attrs:`data-toggle="qcs" data-value="${esc(n)}"`,
+        label: isNone ? 'Unassigned' : n,
+        count: DATA.filter(r => isNone ? !r.qc : r.qc === n).length,
+      });
+    }).join('');
+
+  $('#colPills').innerHTML =
+    pill({ active: false, attrs:'data-action="cols-all" small', label:'Show all', small:true }) +
+    pill({ active: false, attrs:'data-action="cols-none" small', label:'Hide all', small:true }) +
+    COLUMNS.map(c => pill({
+      active: ui.cols.has(c.key),
+      attrs:`data-toggle="cols" data-value="${esc(c.key)}"`,
+      label: c.label || 'Open link',
+      small: true,
+    })).join('');
 }
 
 function renderSummary(){
@@ -263,19 +283,24 @@ function cell(col, r){
 }
 
 function renderTable(){
-  const cols = visibleCols();
+  const cols = COLUMNS.filter(c => ui.cols.has(c.key));
   const rows = DATA.filter(matches);
 
-  $('#head').innerHTML = cols.map(c =>
-    `<th class="${c.type === 'num' ? 'num' : ''}">${esc(c.label)}</th>`).join('');
+  if (!cols.length) {
+    $('#head').innerHTML = '';
+    $('#body').innerHTML = `<tr><td class="empty">No columns selected. Click a column above to show it.</td></tr>`;
+  } else {
+    $('#head').innerHTML = cols.map(c =>
+      `<th class="${c.type === 'num' ? 'num' : ''}">${esc(c.label)}</th>`).join('');
 
-  $('#body').innerHTML = rows.length
-    ? rows.map(r => `<tr>${cols.map(c =>
-        `<td class="${c.type === 'num' || c.type === 'progress' || c.type === 'issues' ? 'num' : ''}">${cell(c, r)}</td>`
-      ).join('')}</tr>`).join('')
-    : `<tr><td colspan="${cols.length}" class="empty">No jobs match these filters.</td></tr>`;
+    $('#body').innerHTML = rows.length
+      ? rows.map(r => `<tr>${cols.map(c =>
+          `<td class="${['num','progress','issues'].includes(c.type) ? 'num' : ''}">${cell(c, r)}</td>`
+        ).join('')}</tr>`).join('')
+      : `<tr><td colspan="${cols.length}" class="empty">No jobs match these filters.</td></tr>`;
+  }
 
-  $('#count').textContent = `Showing ${rows.length} of ${DATA.length} jobs`;
+  $('#count').textContent = `Showing ${rows.length} of ${DATA.length} jobs · ${cols.length} columns`;
 }
 
 function render(){
@@ -289,11 +314,23 @@ function render(){
    EVENTS
    ========================================================= */
 
-// Filter pills
+// Pills: toggle on/off, or run a reset action
 document.addEventListener('click', e => {
-  const b = e.target.closest('.pill');
+  const b = e.target.closest('[data-action],[data-toggle]');
   if (!b) return;
-  ui[b.dataset.group] = b.dataset.value;
+
+  if (b.dataset.toggle) {
+    const set = ui[b.dataset.toggle];
+    const v = b.dataset.value;
+    if (set.has(v)) set.delete(v); else set.add(v);
+  }
+
+  switch (b.dataset.action) {
+    case 'clear-states': ui.states.clear(); break;
+    case 'clear-qcs':    ui.qcs.clear(); break;
+    case 'cols-all':     ui.cols = new Set(COLUMNS.map(c => c.key)); break;
+    case 'cols-none':    ui.cols.clear(); break;
+  }
   render();
 });
 
@@ -312,7 +349,7 @@ $('#q').addEventListener('input', e => { ui.query = e.target.value; renderTable(
 
 // CSV export of the current filtered view and visible columns
 $('#export').addEventListener('click', () => {
-  const cols = visibleCols().filter(c => c.type !== 'open');
+  const cols = COLUMNS.filter(c => ui.cols.has(c.key) && c.type !== 'open');
   const rows = DATA.filter(matches);
   const lines = [cols.map(c => c.label)].concat(rows.map(r => cols.map(c => {
     if (c.type === 'progress') return `${r.annotated}/${r.total}`;
