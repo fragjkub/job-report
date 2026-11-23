@@ -37,9 +37,12 @@
 
   .search{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;min-width:220px;background:#fff}
   .btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer}
+  .btn:hover:not(:disabled){background:var(--hover)}
   .btn:disabled{opacity:.45;cursor:default}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover:not(:disabled){background:#254ED2}
   .btn.danger{color:var(--danger);border-color:#F3C4C0}
+  .btn.danger:hover:not(:disabled){background:#FEF3F2}
   .btn.small{padding:4px 9px;font-size:12px}
 
   .tablewrap{overflow-x:auto}
@@ -50,6 +53,7 @@
   .num{text-align:right;font-variant-numeric:tabular-nums}
   th.num{text-align:right}
   td.empty{text-align:center;color:var(--muted);padding:32px}
+  .row-actions{display:inline-flex;align-items:center;gap:6px}
 
   input.cell-text{border:1px solid transparent;background:transparent;border-radius:5px;padding:4px 6px;font:inherit;color:var(--ink);width:110px}
   input.cell-text:hover{border-color:var(--line)}
@@ -70,16 +74,55 @@
 
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
 
-  /* Open link: the link button, plus a grey box that appears on hover to edit the link */
-  .linkcell{display:inline-flex;align-items:center;gap:8px}
-  a.open{color:var(--accent);text-decoration:none;font-weight:500}
-  a.open:hover{text-decoration:underline}
-  .addlink{color:var(--muted);text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
-  .linkbox{display:none;width:260px;border:1px solid transparent;background:var(--field);border-radius:6px;padding:5px 8px;font:inherit;color:var(--ink)}
-  .linkcell:hover .linkbox,
-  .linkcell:focus-within .linkbox,
-  .linkcell.editing .linkbox{display:inline-block}
-  .linkbox:focus{background:#fff;border-color:var(--accent);outline:none}
+  /* Compact link cell + Notion-style floating popover */
+  a.open{color:var(--accent);text-decoration:underline;text-decoration-color:rgba(47,91,234,.35);text-underline-offset:3px;font-weight:500}
+  a.open:hover{text-decoration-color:var(--accent)}
+  .addlink{background:none;border:0;padding:2px 4px;font:inherit;color:var(--muted);text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer;border-radius:4px}
+  .addlink:hover{color:var(--ink);background:var(--field)}
+
+  .popover{
+    position:fixed;z-index:1000;background:#fff;border:1px solid var(--line);
+    border-radius:8px;box-shadow:0 8px 24px rgba(16,24,40,.14),0 1px 3px rgba(16,24,40,.06);
+    padding:4px 6px;
+  }
+  .popover[hidden]{display:none}
+
+  .lp-preview{display:flex;align-items:center;gap:4px;min-height:28px}
+  .lp-url{
+    display:inline-flex;align-items:center;gap:6px;padding:3px 6px;border-radius:5px;
+    color:var(--muted);text-decoration:none;font-size:13px;max-width:290px;
+  }
+  .lp-url:hover{background:var(--hover);color:var(--ink)}
+  .lp-url-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+  .lp-icon-btn{
+    display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+    border:0;background:transparent;color:var(--muted);border-radius:5px;cursor:pointer;flex:none;
+  }
+  .lp-icon-btn:hover{background:var(--field);color:var(--ink)}
+  .lp-icon-btn.copied{color:var(--ok)}
+  .lp-edit-btn{
+    border:0;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:500;
+    padding:3px 8px;border-radius:5px;cursor:pointer;
+  }
+  .lp-edit-btn:hover{background:var(--field)}
+
+  .lp-edit{display:flex;align-items:center;gap:6px;padding:2px}
+  .lp-input{
+    width:270px;border:1px solid var(--line);border-radius:6px;padding:5px 8px;
+    font:inherit;font-size:13px;color:var(--ink);background:#fff;
+  }
+  .lp-input:focus{border-color:var(--accent);outline:none}
+
+  /* Excel row menu popover */
+  .xm{min-width:210px;padding:6px;display:flex;flex-direction:column;gap:4px}
+  .xm-head{font-size:12px;color:var(--muted);padding:3px 6px 6px;border-bottom:1px solid var(--line);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .xm-btn{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;
+    border:0;background:transparent;color:var(--ink);font:inherit;font-size:13px;
+    padding:6px 8px;border-radius:6px;cursor:pointer;text-align:left;
+  }
+  .xm-btn:hover:not(:disabled){background:var(--field)}
+  .xm-btn:disabled{opacity:.45;cursor:default}
 
   dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(580px,92vw);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.2)}
   dialog.wide{width:min(740px,94vw)}
@@ -87,7 +130,7 @@
   .dlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
   .dlg-head h2{font-size:16px;font-weight:600;margin:0}
   .dlg-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px;max-height:65vh;overflow:auto}
-  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
   .muted{color:var(--muted)}
 
   .note{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
@@ -143,7 +186,7 @@
       <div class="row"><span class="label">QC</span><div class="row" id="qcPills"></div></div>
       <div class="row"><span class="label">Columns</span><div class="row" id="colPills"></div></div>
     </div>
-    <div class="tablewrap">
+    <div class="tablewrap" id="tableWrap">
       <table>
         <thead><tr id="head"></tr></thead>
         <tbody id="body"></tbody>
@@ -192,8 +235,11 @@
     </div>
   </div>
   <div class="dlg-foot">
-    <button class="btn" id="attachBtn" type="button">Attach QC file</button>
-    <span class="sub">Re-reading the file keeps the ticks for IDs that are still in it.</span>
+    <div class="row">
+      <button class="btn" id="openExcelBtn" type="button">Download .xlsx</button>
+      <button class="btn" id="attachBtn" type="button">Update QC file</button>
+    </div>
+    <span class="sub" id="excelMeta">Re-reading the file keeps the ticks for IDs that are still in it.</span>
   </div>
 </dialog>
 
@@ -242,6 +288,10 @@
   </div>
 </dialog>
 
+<!-- Notion-style floating link popover + Excel row menu -->
+<div id="linkPopover" class="popover" hidden></div>
+<div id="excelMenu" class="popover" hidden></div>
+
 <!-- JSZip reads the .xlsx file in the browser -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
@@ -253,11 +303,9 @@
 const CONFIG = {
   title: 'My jobs',
   reportName: 'Dũng',   // name written in the report header
-  openLabel: 'Open',    // text of the link button in the "Open link" column
+  openLabel: 'Open',    // text of the link in the "Open link" column
 };
 
-// Stages. Anno stages come from the tracks ticked as done (automatic).
-// QC stages are set with the QC status dropdown.
 const STAGES = [
   { id:'todo',        label:'Not started',      color:'#4B5563', tint:'#EEF1F5' },
   { id:'in_progress', label:'Anno in progress', color:'#2F5BEA', tint:'#E8EEFD' },
@@ -266,18 +314,14 @@ const STAGES = [
   { id:'qc_done',     label:'QC complete',      color:'#1E7F4F', tint:'#E2F4EA' },
 ];
 
-// QC status dropdown options
 const QC_STATUS = [
   { id:'',            label:'–' },
   { id:'qc_progress', label:'QC in progress' },
   { id:'qc_done',     label:'QC complete' },
 ];
 
-// QC reviewers shown as filters and in the QC dropdown.
 const QC_REVIEWERS = ['Huyền', 'Chi', 'Huy', 'Long'];
 
-// Columns. "visible" = shown when the page first loads.
-// Frame, TrackID and Cuboid are read from the QC file and cannot be typed in.
 const COLUMNS = [
   { key:'no',          label:'No.',             type:'text',     visible:true },
   { key:'batch',       label:'Batch',           type:'text',     visible:true },
@@ -297,15 +341,59 @@ const COLUMNS = [
 ];
 
 /* =========================================================
+   INDEXEDDB STORE FOR .XLSX FILES
+   Stores the uploaded .xlsx binary locally so you can download
+   and open it in Excel anytime.
+   ========================================================= */
+
+const excelStore = (() => {
+  const DB_NAME = 'jobReportFiles.v1';
+  const STORE = 'files';
+  let dbPromise = null;
+
+  function openDb(){
+    if (!dbPromise) {
+      dbPromise = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) { reject(new Error('No IndexedDB')); return; }
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    return dbPromise;
+  }
+
+  async function run(mode, fn){
+    try {
+      const db = await openDb();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, mode);
+        const req = fn(tx.objectStore(STORE));
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.warn('Excel storage error:', err);
+      return null;
+    }
+  }
+
+  return {
+    put: (key, file) => run('readwrite', s => s.put(file, key)),
+    get: (key) => run('readonly', s => s.get(key)),
+    del: (key) => run('readwrite', s => s.delete(key)),
+  };
+})();
+
+const makeFileKey = () => 'xlsx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+/* =========================================================
    DATA + SAVING
-   Every change is saved to this browser automatically (localStorage).
-   Use Backup / Restore to keep a copy or move to another computer.
    ========================================================= */
 
 const STORAGE_KEY = 'jobReport.v2';
 
-// Used only the first time, when nothing is saved yet.
-// Job 2772 is read from the qc_report.xlsx you sent. Job 2901 has no file yet.
 const SEED = [
   {
     no:1, batch:3, task:2772, job:3269, qc:'Huy', qcState:'',
@@ -369,7 +457,6 @@ const SEED = [
   },
 ];
 
-// Bring saved or restored rows up to the current format
 function migrate(rows){
   return rows.map(r => ({
     no: Number(r.no) || 0,
@@ -419,8 +506,6 @@ let DATA = loadData();
 
 /* =========================================================
    STATE
-   Filters are multi-select: click to turn on, click again to turn off.
-   Empty filter = no restriction. Empty columns = empty table.
    ========================================================= */
 
 const ui = {
@@ -430,9 +515,10 @@ const ui = {
   query: '',
 };
 
-let openRowNo = null;     // job whose dialog is open
-let noteSeq = 0;          // id counter for notes
-let pendingImport = null; // parsed file waiting in the New job dialog
+let openRowNo = null;        // job whose dialog is open
+let attachTargetRowNo = null;// job receiving an updated .xlsx file
+let noteSeq = 0;
+let pendingImport = null;
 
 function syncNoteSeq(){
   noteSeq = DATA.reduce((m, r) =>
@@ -452,7 +538,14 @@ const stageMeta = id => STAGES.find(s => s.id === id) || STAGES[0];
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
 const isNumeric = c => ['num', 'progress', 'issues', 'auto'].includes(c.type);
 
-// Track and cuboid numbers come from the tracks list
+function normalizeUrl(raw){
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return '';
+  return 'https://' + s;
+}
+
 const trackCount = r => (r.tracks || []).length;
 const doneCount  = r => (r.tracks || []).filter(t => t.done).length;
 const cuboidsOf  = r => (r.tracks || []).reduce((a, t) => a + Number(t.cuboids || 0), 0);
@@ -460,21 +553,19 @@ const pctOf      = r => trackCount(r) ? doneCount(r) / trackCount(r) * 100 : 0;
 const isAnnoComplete = r => trackCount(r) > 0 && doneCount(r) === trackCount(r);
 const openCount  = r => (r.notes || []).filter(n => !n.done).length;
 const currentRow = () => DATA.find(r => r.no === openRowNo);
+const rowByNo    = no => DATA.find(r => r.no === no);
 
-// Local time as "YYYY-MM-DDTHH:mm"
 function nowLocal(){
   const d = new Date();
   const p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-// "2026-11-23T14:05" -> "23/11/2026 14:05"
 function fmtDate(s){
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || '');
   return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : '';
 }
 
-// Ngày hoàn thành = the moment every track is ticked (100%). Cleared if it drops below.
 function refreshAnno(r){
   if (isAnnoComplete(r)) {
     if (!r.annoDoneAt) r.annoDoneAt = nowLocal();
@@ -483,7 +574,6 @@ function refreshAnno(r){
   }
 }
 
-// Current stage, from the ticked tracks and the QC status
 function stageOf(r){
   if (r.qcState === 'qc_done') return 'qc_done';
   if (r.qcState === 'qc_progress') return 'qc_progress';
@@ -502,12 +592,28 @@ function matches(r){
   return true;
 }
 
+// Position any floating popover cleanly inside the viewport
+function positionPopover(pop, anchor){
+  const rect = anchor.getBoundingClientRect();
+  pop.style.left = '0px';
+  pop.style.top = '0px';
+  pop.hidden = false;
+  const pw = pop.offsetWidth;
+  const ph = pop.offsetHeight;
+  let top = rect.bottom + 6;
+  if (top + ph > window.innerHeight - 10) {
+    top = Math.max(8, rect.top - ph - 6);
+  }
+  let left = rect.left;
+  if (left + pw > window.innerWidth - 10) {
+    left = Math.max(8, window.innerWidth - pw - 10);
+  }
+  pop.style.top = `${Math.round(top)}px`;
+  pop.style.left = `${Math.round(left)}px`;
+}
+
 /* =========================================================
    READING THE QC FILE (.xlsx, sheet "Matrix")
-   Rows = track IDs, columns = frames.
-   A frame cell that is coloured (or has an issue symbol) = the track is there.
-   Cuboids for a track = last frame − first frame + 1
-   (gaps in the middle count, empty frames at the start and end do not).
    ========================================================= */
 
 function loadXml(zip, path){
@@ -539,7 +645,6 @@ function readCellValue(c, sst){
   return Number.isNaN(n) ? vEl.textContent : n;
 }
 
-// Returns Map(rowNumber -> Map(columnLetter -> { v, filled })) for the named sheet
 async function readSheet(zip, sheetName){
   const wb = await loadXml(zip, 'xl/workbook.xml');
   const rels = await loadXml(zip, 'xl/_rels/workbook.xml.rels');
@@ -555,7 +660,6 @@ async function readSheet(zip, sheetName){
   const sheet = await loadXml(zip, path);
   const sst = await readSharedStrings(zip);
 
-  // Which cell styles have a solid fill (the coloured boxes)
   let fillSolid = [], xfFill = [];
   const sf = zip.file('xl/styles.xml');
   if (sf) {
@@ -592,7 +696,6 @@ async function parseQcFile(file){
   const matrix = await readSheet(zip, 'Matrix');
   if (!matrix) throw new Error('This file has no "Matrix" sheet.');
 
-  // The header row is the one where column A says "Track ID"
   let headerRow = null;
   for (const [row, cols] of matrix) {
     const a = cols.get('A') && cols.get('A').v;
@@ -600,7 +703,6 @@ async function parseQcFile(file){
   }
   if (headerRow === null) throw new Error('Could not find the "Track ID" header row in Matrix.');
 
-  // Frame columns: numeric headers in the header row
   const frameCols = [];
   for (const [col, cell] of matrix.get(headerRow)) {
     if (typeof cell.v === 'number' && Number.isInteger(cell.v)) frameCols.push([col, cell.v]);
@@ -609,7 +711,6 @@ async function parseQcFile(file){
   const frameNums = frameCols.map(f => f[1]);
   const frames = Math.max(...frameNums) - Math.min(...frameNums) + 1;
 
-  // One track per row below the header
   const tracks = [];
   const rowNumbers = [...matrix.keys()].filter(r => r > headerRow).sort((a, b) => a - b);
   for (const row of rowNumbers) {
@@ -638,7 +739,6 @@ async function parseQcFile(file){
     });
   }
 
-  // Batch and task are often in the file path on the Summary sheet
   let batchHint = '', taskHint = '';
   const summary = await readSheet(zip, 'Summary');
   const pathCell = summary && summary.get(3) && summary.get(3).get('B');
@@ -651,14 +751,206 @@ async function parseQcFile(file){
   return { frames, tracks, source: file.name, batchHint, taskHint };
 }
 
-// Re-reading a file keeps the ticks for track IDs that are still in it
-function mergeImport(r, parsed){
+function mergeImport(r, parsed, fileKey){
   const old = new Map((r.tracks || []).map(t => [t.id, t]));
   r.tracks = parsed.tracks.map(t => ({ ...t, done: !!(old.get(t.id) && old.get(t.id).done) }));
   r.frames = parsed.frames;
-  r.source = { name: parsed.source, importedAt: nowLocal() };
+  r.source = { name: parsed.source, importedAt: nowLocal(), fileKey: fileKey || null };
   refreshAnno(r);
 }
+
+async function downloadJobExcel(r){
+  if (!r || !r.source || !r.source.fileKey) {
+    alert('The original .xlsx file is not stored in this browser yet. Click "Update .xlsx" to attach it.');
+    return;
+  }
+  const file = await excelStore.get(r.source.fileKey);
+  if (!file) {
+    alert('Stored .xlsx file was not found in this browser. Click "Update .xlsx" to re-attach it.');
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file);
+  a.download = r.source.name || `job-${r.job || r.no}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function triggerExcelUpdate(rowNo){
+  attachTargetRowNo = rowNo;
+  closeExcelMenu();
+  $('#attachFile').click();
+}
+
+/* =========================================================
+   NOTION-STYLE LINK POPOVER
+   ========================================================= */
+
+const ICON_GLOBE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+const ICON_COPY  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+const linkPop = $('#linkPopover');
+let lpRowNo = null;
+let lpMode = null;       // 'preview' | 'edit' | null
+let lpAnchor = null;
+let lpHideTimer = null;
+
+function cancelLinkHide(){
+  if (lpHideTimer) { clearTimeout(lpHideTimer); lpHideTimer = null; }
+}
+
+function scheduleLinkHide(){
+  cancelLinkHide();
+  if (lpMode !== 'preview') return;
+  lpHideTimer = setTimeout(() => {
+    if (lpMode === 'preview') closeLinkPopover();
+  }, 180);
+}
+
+function closeLinkPopover(){
+  cancelLinkHide();
+  linkPop.hidden = true;
+  linkPop.innerHTML = '';
+  lpRowNo = null;
+  lpMode = null;
+  lpAnchor = null;
+}
+
+function openLinkPreview(rowNo, anchor){
+  const r = rowByNo(rowNo);
+  if (!r || !r.link) return;
+  cancelLinkHide();
+  closeExcelMenu();
+  lpRowNo = rowNo;
+  lpMode = 'preview';
+  lpAnchor = anchor;
+
+  linkPop.innerHTML = `
+    <div class="lp-preview">
+      <a class="lp-url" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener" title="${esc(r.link)}">
+        ${ICON_GLOBE}
+        <span class="lp-url-text">${esc(r.link)}</span>
+      </a>
+      <button type="button" class="lp-icon-btn" data-lp-copy title="Copy link" aria-label="Copy link">${ICON_COPY}</button>
+      <button type="button" class="lp-edit-btn" data-lp-edit>Edit</button>
+    </div>`;
+  positionPopover(linkPop, anchor);
+}
+
+function openLinkEdit(rowNo, anchor){
+  const r = rowByNo(rowNo);
+  if (!r) return;
+  cancelLinkHide();
+  closeExcelMenu();
+  lpRowNo = rowNo;
+  lpMode = 'edit';
+  lpAnchor = anchor || lpAnchor;
+
+  linkPop.innerHTML = `
+    <form class="lp-edit" id="lpForm" autocomplete="off">
+      <input type="text" inputmode="url" class="lp-input" id="lpInput"
+        value="${esc(r.link)}" placeholder="Paste link and press Enter…" aria-label="Link URL">
+      <button type="submit" class="btn primary small">Save</button>
+      ${r.link ? `<button type="button" class="lp-icon-btn" data-lp-clear title="Remove link" aria-label="Remove link">×</button>` : ''}
+    </form>`;
+  positionPopover(linkPop, lpAnchor);
+
+  const input = $('#lpInput');
+  if (input) { input.focus(); input.select(); }
+}
+
+linkPop.addEventListener('mouseenter', cancelLinkHide);
+linkPop.addEventListener('mouseleave', scheduleLinkHide);
+
+linkPop.addEventListener('click', async e => {
+  const copyBtn = e.target.closest('[data-lp-copy]');
+  if (copyBtn) {
+    const r = rowByNo(lpRowNo);
+    if (!r || !r.link) return;
+    try { await navigator.clipboard.writeText(r.link); } catch (_) {}
+    copyBtn.classList.add('copied');
+    copyBtn.innerHTML = ICON_CHECK;
+    setTimeout(() => {
+      if (copyBtn.isConnected) {
+        copyBtn.classList.remove('copied');
+        copyBtn.innerHTML = ICON_COPY;
+      }
+    }, 1200);
+    return;
+  }
+
+  if (e.target.closest('[data-lp-edit]')) {
+    openLinkEdit(lpRowNo, lpAnchor);
+    return;
+  }
+
+  if (e.target.closest('[data-lp-clear]')) {
+    const r = rowByNo(lpRowNo);
+    if (r) { r.link = ''; render(); }
+    closeLinkPopover();
+  }
+});
+
+linkPop.addEventListener('submit', e => {
+  if (e.target.id !== 'lpForm') return;
+  e.preventDefault();
+  const r = rowByNo(lpRowNo);
+  const input = $('#lpInput');
+  if (r && input) {
+    r.link = normalizeUrl(input.value);
+    render();
+  }
+  closeLinkPopover();
+});
+
+/* =========================================================
+   EXCEL ROW POPOVER MENU
+   ========================================================= */
+
+const excelMenu = $('#excelMenu');
+let xmRowNo = null;
+
+function closeExcelMenu(){
+  excelMenu.hidden = true;
+  excelMenu.innerHTML = '';
+  xmRowNo = null;
+}
+
+function openExcelMenu(rowNo, anchor){
+  if (xmRowNo === rowNo && !excelMenu.hidden) { closeExcelMenu(); return; }
+  const r = rowByNo(rowNo);
+  if (!r) return;
+  closeLinkPopover();
+  xmRowNo = rowNo;
+
+  const hasFile = !!(r.source && r.source.fileKey);
+  const nameText = r.source ? r.source.name : 'No QC file attached';
+
+  excelMenu.innerHTML = `
+    <div class="xm">
+      <div class="xm-head" title="${esc(nameText)}">${esc(nameText)}</div>
+      <button type="button" class="xm-btn" data-xm-open ${hasFile ? '' : 'disabled'}
+        title="${hasFile ? 'Download and open in Excel' : 'Attach the .xlsx file once in this browser to enable download'}">
+        <span>Open / Download .xlsx</span>
+      </button>
+      <button type="button" class="xm-btn" data-xm-update>
+        <span>${r.source ? 'Update .xlsx (keeps ticks)' : 'Attach .xlsx'}</span>
+      </button>
+    </div>`;
+  positionPopover(excelMenu, anchor);
+}
+
+excelMenu.addEventListener('click', e => {
+  const r = rowByNo(xmRowNo);
+  if (!r) return;
+  if (e.target.closest('[data-xm-open]')) {
+    closeExcelMenu();
+    downloadJobExcel(r);
+  } else if (e.target.closest('[data-xm-update]')) {
+    triggerExcelUpdate(r.no);
+  }
+});
 
 /* =========================================================
    RENDER
@@ -747,7 +1039,7 @@ function cell(col, r){
 
     case 'progress': {
       const pct = pctOf(r);
-      return `<button type="button" class="issue-btn" data-tracks="${r.no}" title="Open the track checklist">` +
+      return `<button type="button" class="issue-btn" data-tracks="${r.no}" title="Open track checklist & QC file">` +
                `${fmt(doneCount(r))} / ${fmt(trackCount(r))}</button>` +
              `<span class="bar${pct >= 100 ? ' done' : ''}"><i style="width:${pct.toFixed(1)}%"></i></span>` +
              `<span class="pct">${pct.toFixed(0)}%</span>`;
@@ -779,14 +1071,10 @@ function cell(col, r){
         ? `<span class="ts">${fmtDate(r.annoDoneAt)}</span>`
         : `<span class="ts none">–</span>`;
 
-    case 'link': {
-      const open = r.link
-        ? `<a class="open" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener">${esc(CONFIG.openLabel)} →</a>`
-        : `<span class="addlink" data-focus-link="${r.no}">Add link</span>`;
-      return `<span class="linkcell">${open}` +
-             `<input class="linkbox" type="url" data-edit="link" ${id} value="${esc(r.link)}" placeholder="Paste link…" aria-label="Link">` +
-             `</span>`;
-    }
+    case 'link':
+      return r.link
+        ? `<a class="open" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener" data-link-row="${r.no}">${esc(CONFIG.openLabel)}</a>`
+        : `<button type="button" class="addlink" data-link-add="${r.no}">Add link</button>`;
 
     default:
       return esc(r[col.key] ?? '–');
@@ -806,7 +1094,10 @@ function renderTable(){
 
     const body = rows.map(r =>
       `<tr>${cols.map(c => `<td class="${isNumeric(c) ? 'num' : ''}">${cell(c, r)}</td>`).join('')}` +
-      `<td><button type="button" class="btn danger small" data-delete="${r.no}">Delete</button></td></tr>`
+      `<td><div class="row-actions">` +
+      `<button type="button" class="btn small" data-excel-menu="${r.no}" title="Open or update QC Excel file">Excel</button>` +
+      `<button type="button" class="btn danger small" data-delete="${r.no}">Delete</button>` +
+      `</div></td></tr>`
     ).join('');
 
     $('#body').innerHTML = rows.length ? body
@@ -861,9 +1152,22 @@ function renderTrackDialog(){
         `<div class="logitem"><span><b>${i + 1}.</b> ${esc(fmtDate(c.at))} · ${c.ids.join(' ')}</span>` +
         `<button type="button" class="btn danger small" data-cluster-del="${esc(c.id)}">×</button></div>`).join('')
     : `<div class="muted">No clusters yet. Type IDs above and press Tick.</div>`;
+
+  const hasStoredFile = !!(r.source && r.source.fileKey);
+  const openBtn = $('#openExcelBtn');
+  openBtn.disabled = !hasStoredFile;
+  openBtn.title = hasStoredFile
+    ? `Download ${r.source.name}`
+    : 'Attach/update the .xlsx file once in this browser to enable download';
+
+  $('#excelMeta').textContent = r.source
+    ? `${r.source.name} (${fmtDate(r.source.importedAt) || 'imported'}) · Updating keeps existing ticks.`
+    : 'Re-reading the file keeps the ticks for IDs that are still in it.';
 }
 
 function openTracks(no){
+  closeLinkPopover();
+  closeExcelMenu();
   openRowNo = no;
   $('#clusterInput').value = '';
   setStatus('');
@@ -952,6 +1256,8 @@ function renderNotes(){
 }
 
 function openNotes(no){
+  closeLinkPopover();
+  closeExcelMenu();
   openRowNo = no;
   renderNotes();
   $('#notesDlg').showModal();
@@ -1020,6 +1326,8 @@ function buildReport(){
 }
 
 function openReport(){
+  closeLinkPopover();
+  closeExcelMenu();
   $('#reportText').value = buildReport() || 'No jobs yet.';
   $('#reportCount').textContent = `${DATA.length} jobs`;
   $('#reportDlg').showModal();
@@ -1047,6 +1355,8 @@ function setQcStatus(row, value){
 }
 
 function openNewJob(){
+  closeLinkPopover();
+  closeExcelMenu();
   pendingImport = null;
   $('#newFile').value = '';
   $('#newBatch').value = '';
@@ -1058,9 +1368,14 @@ function openNewJob(){
   $('#newDlg').showModal();
 }
 
-function createJob(){
+async function createJob(){
   if (!pendingImport) return;
   const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
+  const fileKey = makeFileKey();
+  if (pendingImport.file) {
+    await excelStore.put(fileKey, pendingImport.file);
+  }
+
   DATA.push({
     no,
     batch: $('#newBatch').value.trim(),
@@ -1068,18 +1383,17 @@ function createJob(){
     job: $('#newJob').value.trim(),
     qc: $('#newQc').value || null,
     qcState: '',
-    source: { name: pendingImport.source, importedAt: nowLocal() },
+    source: { name: pendingImport.source, importedAt: nowLocal(), fileKey: pendingImport.file ? fileKey : null },
     frames: pendingImport.frames,
     tracks: pendingImport.tracks.map(t => ({ ...t })),
     clusters: [],
     notes: [],
     link: '',
-    assignedAt: nowLocal(),   // Ngày giao = the moment the job is added
-    annoDoneAt: '',           // Ngày hoàn thành = the moment every track is ticked
+    assignedAt: nowLocal(),
+    annoDoneAt: '',
   });
   pendingImport = null;
 
-  // Clear filters and search so the new row is visible
   ui.states.clear();
   ui.qcs.clear();
   ui.query = '';
@@ -1094,7 +1408,11 @@ function deleteJob(no){
   if (i === -1) return;
   const label = DATA[i].job || `No. ${no}`;
   if (!confirm(`Delete job ${label}?`)) return;
+  const oldKey = DATA[i].source && DATA[i].source.fileKey;
+  if (oldKey) excelStore.del(oldKey);
   DATA.splice(i, 1);
+  closeLinkPopover();
+  closeExcelMenu();
   render();
 }
 
@@ -1113,6 +1431,26 @@ function backupData(){
 
 // Table and page buttons
 document.addEventListener('click', e => {
+  // Collapse floating popovers when clicking outside them
+  if (!linkPop.hidden && !e.target.closest('#linkPopover, [data-link-add], [data-link-row]')) {
+    closeLinkPopover();
+  }
+  if (!excelMenu.hidden && !e.target.closest('#excelMenu, [data-excel-menu]')) {
+    closeExcelMenu();
+  }
+
+  const addLinkBtn = e.target.closest('[data-link-add]');
+  if (addLinkBtn) {
+    openLinkEdit(Number(addLinkBtn.dataset.linkAdd), addLinkBtn);
+    return;
+  }
+
+  const excelBtn = e.target.closest('[data-excel-menu]');
+  if (excelBtn) {
+    openExcelMenu(Number(excelBtn.dataset.excelMenu), excelBtn);
+    return;
+  }
+
   const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes],[data-tracks]');
   if (!b) return;
 
@@ -1136,15 +1474,30 @@ document.addEventListener('click', e => {
   render();
 });
 
-// "Add link" text: open the link box for that row
-document.addEventListener('click', e => {
-  const t = e.target.closest('[data-focus-link]');
-  if (!t) return;
-  const cell = t.closest('.linkcell');
-  const box = cell && cell.querySelector('.linkbox');
-  if (cell) cell.classList.add('editing');
-  if (box) box.focus();
+// Hovering an existing link opens the Notion-style preview popover
+$('#body').addEventListener('mouseover', e => {
+  const linkEl = e.target.closest('a[data-link-row]');
+  if (!linkEl || lpMode === 'edit') return;
+  openLinkPreview(Number(linkEl.dataset.linkRow), linkEl);
 });
+
+$('#body').addEventListener('mouseout', e => {
+  const linkEl = e.target.closest('a[data-link-row]');
+  if (!linkEl) return;
+  if (e.relatedTarget && (linkEl.contains(e.relatedTarget) || linkPop.contains(e.relatedTarget))) return;
+  scheduleLinkHide();
+});
+
+// Escape / scroll collapse popovers cleanly
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeLinkPopover();
+    closeExcelMenu();
+  }
+});
+
+window.addEventListener('scroll', () => { closeLinkPopover(); closeExcelMenu(); }, true);
+window.addEventListener('resize', () => { closeLinkPopover(); closeExcelMenu(); });
 
 // Editing fields in the table
 document.addEventListener('change', e => {
@@ -1156,15 +1509,14 @@ document.addEventListener('change', e => {
   const field = el.dataset.edit;
   const value = el.value;
 
-  if (field === 'qcState')   setQcStatus(row, value);
-  else if (field === 'qc')   row.qc = value || null;
-  else if (field === 'link') row.link = value.trim();
-  else                       row[field] = value.trim();
+  if (field === 'qcState') setQcStatus(row, value);
+  else if (field === 'qc') row.qc = value || null;
+  else                     row[field] = value.trim();
 
   render();
 });
 
-// Track checklist: ticking a box, cluster log, attach file
+// Track checklist dialog
 const trkDlg = $('#trkDlg');
 
 trkDlg.addEventListener('change', e => {
@@ -1191,19 +1543,28 @@ $('#clusterApply').addEventListener('click', applyCluster);
 $('#clusterInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); applyCluster(); }
 });
-$('#attachBtn').addEventListener('click', () => $('#attachFile').click());
+$('#openExcelBtn').addEventListener('click', () => downloadJobExcel(currentRow()));
+$('#attachBtn').addEventListener('click', () => triggerExcelUpdate(openRowNo));
 
 $('#attachFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   e.target.value = '';
-  const r = currentRow();
+  const r = rowByNo(attachTargetRowNo);
+  attachTargetRowNo = null;
   if (!file || !r) return;
   try {
     const parsed = await parseQcFile(file);
-    mergeImport(r, parsed);
+    const oldKey = r.source && r.source.fileKey;
+    const newKey = makeFileKey();
+    await excelStore.put(newKey, file);
+    if (oldKey) excelStore.del(oldKey);
+
+    mergeImport(r, parsed, newKey);
     render();
-    renderTrackDialog();
-    setStatus(`Read ${parsed.tracks.length} tracks, ${parsed.frames} frames, ${parsed.tracks.reduce((a, t) => a + t.cuboids, 0)} cuboids.`);
+    if (trkDlg.open && openRowNo === r.no) {
+      renderTrackDialog();
+      setStatus(`Read ${parsed.tracks.length} tracks, ${parsed.frames} frames, ${parsed.tracks.reduce((a, t) => a + t.cuboids, 0)} cuboids.`);
+    }
   } catch (err) {
     alert('Could not read this file: ' + err.message);
   }
@@ -1251,12 +1612,13 @@ $('#newFile').addEventListener('change', async e => {
   $('#newPreview').textContent = 'Reading file…';
   $('#createJob').disabled = true;
   try {
-    pendingImport = await parseQcFile(file);
-    const cuboids = pendingImport.tracks.reduce((a, t) => a + t.cuboids, 0);
+    const parsed = await parseQcFile(file);
+    pendingImport = { ...parsed, file };
+    const cuboids = parsed.tracks.reduce((a, t) => a + t.cuboids, 0);
     $('#newPreview').textContent =
-      `${pendingImport.tracks.length} tracks · ${pendingImport.frames} frames · ${cuboids} cuboids`;
-    if (!$('#newBatch').value && pendingImport.batchHint) $('#newBatch').value = pendingImport.batchHint;
-    if (!$('#newTask').value && pendingImport.taskHint) $('#newTask').value = pendingImport.taskHint;
+      `${parsed.tracks.length} tracks · ${parsed.frames} frames · ${cuboids} cuboids`;
+    if (!$('#newBatch').value && parsed.batchHint) $('#newBatch').value = parsed.batchHint;
+    if (!$('#newTask').value && parsed.taskHint) $('#newTask').value = parsed.taskHint;
     $('#createJob').disabled = false;
   } catch (err) {
     pendingImport = null;
