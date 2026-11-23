@@ -114,7 +114,7 @@
   .lp-input:focus{border-color:var(--accent);outline:none}
 
   /* Excel row menu popover */
-  .xm{min-width:210px;padding:6px;display:flex;flex-direction:column;gap:4px}
+  .xm{min-width:220px;padding:6px;display:flex;flex-direction:column;gap:4px}
   .xm-head{font-size:12px;color:var(--muted);padding:3px 6px 6px;border-bottom:1px solid var(--line);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .xm-btn{
     display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;
@@ -126,10 +126,12 @@
 
   dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(580px,92vw);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.2)}
   dialog.wide{width:min(740px,94vw)}
+  dialog.xl{width:min(1260px,96vw)}
   dialog::backdrop{background:rgba(16,24,40,.35)}
   .dlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
   .dlg-head h2{font-size:16px;font-weight:600;margin:0}
   .dlg-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px;max-height:65vh;overflow:auto}
+  dialog.xl .dlg-body{max-height:74vh;overflow:hidden}
   .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
   .muted{color:var(--muted)}
 
@@ -154,6 +156,44 @@
   .logitem{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff}
 
   #reportText{width:100%;min-height:340px;border:1px solid var(--line);border-radius:8px;padding:12px;font:13px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--ink);resize:vertical;background:#FBFCFD}
+
+  /* Matrix preview modal */
+  .mx-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .mx-banner{
+    background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;border-radius:8px;
+    padding:7px 10px;font-size:12.5px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  }
+  .mx-wrap{
+    flex:1;min-height:240px;max-height:58vh;overflow:auto;
+    border:1px solid var(--line);border-radius:8px;background:#fff;
+  }
+  table.mx{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+  table.mx th,table.mx td{
+    border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:4px 6px;text-align:center;font-variant-numeric:tabular-nums;
+  }
+  table.mx thead th{
+    position:sticky;top:0;z-index:3;background:var(--head);color:var(--muted);font-weight:600;
+  }
+  table.mx tbody tr:hover td.mx-meta{background:var(--hover)}
+  table.mx tbody tr.mx-done td.mx-meta{background:#F0FAF4}
+  table.mx tbody tr.mx-done td.mx-cell{opacity:.65}
+
+  table.mx .sticky-0{position:sticky;left:0;z-index:2;width:44px;min-width:44px;max-width:44px;background:#fff}
+  table.mx .sticky-1{position:sticky;left:44px;z-index:2;width:64px;min-width:64px;max-width:64px;background:#fff;font-weight:600}
+  table.mx .sticky-2{
+    position:sticky;left:108px;z-index:2;width:112px;min-width:112px;max-width:112px;
+    background:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;
+    box-shadow:2px 0 0 rgba(220,226,234,.9);
+  }
+  table.mx thead .sticky-0,
+  table.mx thead .sticky-1,
+  table.mx thead .sticky-2{z-index:5;background:var(--head)}
+
+  table.mx td.mx-cell{min-width:28px;height:25px;padding:2px 4px;font-weight:600;font-size:11.5px}
+  table.mx td.mx-cell.mx-present{background:#DCE8FF;color:#1D4ED8}
+  table.mx td.mx-cell.mx-sym{box-shadow:inset 0 0 0 1px rgba(180,35,24,.35)}
+  table.mx.mx-generic th,table.mx.mx-generic td{text-align:left;padding:6px 10px;max-width:420px;overflow:hidden;text-overflow:ellipsis}
 
   button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
@@ -236,10 +276,40 @@
   </div>
   <div class="dlg-foot">
     <div class="row">
+      <button class="btn" id="previewMatrixBtn" type="button">Preview Matrix</button>
       <button class="btn" id="openExcelBtn" type="button">Download .xlsx</button>
       <button class="btn" id="attachBtn" type="button">Update QC file</button>
     </div>
     <span class="sub" id="excelMeta">Re-reading the file keeps the ticks for IDs that are still in it.</span>
+  </div>
+</dialog>
+
+<!-- In-browser Excel Matrix preview modal -->
+<dialog id="matrixDlg" class="xl" aria-labelledby="mxTitle">
+  <div class="dlg-head">
+    <div>
+      <h2 id="mxTitle">Matrix preview</h2>
+      <div class="sub" id="mxSub"></div>
+    </div>
+    <button type="button" class="btn small" data-close>Close</button>
+  </div>
+  <div class="dlg-body">
+    <div id="mxBanner" class="mx-banner" hidden></div>
+    <div class="mx-bar">
+      <div class="row" id="mxSheets"></div>
+      <div class="row" id="mxControls">
+        <input id="mxSearch" class="search" type="search" placeholder="Filter Track ID, class, symbol…" style="min-width:200px">
+        <div class="row" id="mxFilterPills"></div>
+      </div>
+    </div>
+    <div class="mx-wrap" id="mxWrap"></div>
+  </div>
+  <div class="dlg-foot">
+    <div class="row">
+      <button class="btn" id="mxDownloadBtn" type="button">Download .xlsx</button>
+      <button class="btn" id="mxUpdateBtn" type="button">Update .xlsx</button>
+    </div>
+    <span class="sub" id="mxFootInfo"></span>
   </div>
 </dialog>
 
@@ -342,8 +412,6 @@ const COLUMNS = [
 
 /* =========================================================
    INDEXEDDB STORE FOR .XLSX FILES
-   Stores the uploaded .xlsx binary locally so you can download
-   and open it in Excel anytime.
    ========================================================= */
 
 const excelStore = (() => {
@@ -515,10 +583,20 @@ const ui = {
   query: '',
 };
 
-let openRowNo = null;        // job whose dialog is open
-let attachTargetRowNo = null;// job receiving an updated .xlsx file
+let openRowNo = null;         // job open in track/notes dialog
+let attachTargetRowNo = null; // job receiving an updated .xlsx file
 let noteSeq = 0;
 let pendingImport = null;
+
+// Matrix modal state (independent so it can open on top of Track dialog)
+const mx = {
+  rowNo: null,
+  sheets: [],        // [{ name, rows }]
+  activeSheet: '',
+  fromFile: false,
+  query: '',
+  filter: 'all',     // 'all' | 'undone' | 'symbols'
+};
 
 function syncNoteSeq(){
   noteSeq = DATA.reduce((m, r) =>
@@ -592,7 +670,6 @@ function matches(r){
   return true;
 }
 
-// Position any floating popover cleanly inside the viewport
 function positionPopover(pop, anchor){
   const rect = anchor.getBoundingClientRect();
   pop.style.left = '0px';
@@ -612,9 +689,58 @@ function positionPopover(pop, anchor){
   pop.style.left = `${Math.round(left)}px`;
 }
 
+// Convert Excel column letters (A, B, ..., AA) to 1-based number
+function colToNum(col){
+  let n = 0;
+  for (let i = 0; i < col.length; i++) n = n * 26 + (col.charCodeAt(i) - 64);
+  return n;
+}
+
 /* =========================================================
-   READING THE QC FILE (.xlsx, sheet "Matrix")
+   READING THE QC FILE (.xlsx) WITH CELL COLORS & STYLES
    ========================================================= */
+
+const OFFICE_THEME = [
+  '#FFFFFF','#000000','#E7E6E6','#44546A','#4472C4',
+  '#ED7D31','#A5A5A5','#FFC000','#5B9BD5','#70AD47',
+];
+
+function applyTint(hex, tint){
+  if (!hex || !tint) return hex;
+  const t = Number(tint);
+  if (Number.isNaN(t) || t === 0) return hex;
+  const ch = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const out = ch.map(v => {
+    const nv = t > 0 ? v + (255 - v) * t : v * (1 + t);
+    return Math.max(0, Math.min(255, Math.round(nv))).toString(16).padStart(2, '0');
+  });
+  return '#' + out.join('');
+}
+
+function resolveExcelColor(el){
+  if (!el) return null;
+  const rgb = el.getAttribute('rgb');
+  if (rgb) {
+    const clean = rgb.trim().replace(/^#/, '');
+    if (clean.length === 8) return '#' + clean.slice(2);
+    if (clean.length === 6) return '#' + clean;
+  }
+  const theme = el.getAttribute('theme');
+  if (theme !== null) {
+    const base = OFFICE_THEME[Number(theme)];
+    if (base) return applyTint(base, el.getAttribute('tint'));
+  }
+  return null;
+}
+
+function readableInk(bgHex){
+  if (!bgHex || bgHex.length !== 7) return '#16202B';
+  const r = parseInt(bgHex.slice(1, 3), 16);
+  const g = parseInt(bgHex.slice(3, 5), 16);
+  const b = parseInt(bgHex.slice(5, 7), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum < 0.52 ? '#FFFFFF' : '#16202B';
+}
 
 function loadXml(zip, path){
   const f = zip.file(path);
@@ -628,6 +754,34 @@ async function readSharedStrings(zip){
   const doc = new DOMParser().parseFromString(await f.async('string'), 'application/xml');
   return [...doc.getElementsByTagName('si')].map(si =>
     [...si.getElementsByTagName('t')].map(t => t.textContent).join(''));
+}
+
+async function readStyles(zip){
+  const sf = zip.file('xl/styles.xml');
+  if (!sf) return { fills: [], fonts: [], xfs: [] };
+  const doc = new DOMParser().parseFromString(await sf.async('string'), 'application/xml');
+
+  const fillsEl = doc.getElementsByTagName('fills')[0];
+  const fills = fillsEl ? [...fillsEl.getElementsByTagName('fill')].map(f => {
+    const p = f.getElementsByTagName('patternFill')[0];
+    const solid = !!p && p.getAttribute('patternType') === 'solid';
+    const fg = p ? p.getElementsByTagName('fgColor')[0] : null;
+    return { solid, bg: solid ? resolveExcelColor(fg) : null };
+  }) : [];
+
+  const fontsEl = doc.getElementsByTagName('fonts')[0];
+  const fonts = fontsEl ? [...fontsEl.getElementsByTagName('font')].map(f => {
+    const col = f.getElementsByTagName('color')[0];
+    return { color: resolveExcelColor(col), bold: f.getElementsByTagName('b').length > 0 };
+  }) : [];
+
+  const xfsEl = doc.getElementsByTagName('cellXfs')[0];
+  const xfs = xfsEl ? [...xfsEl.getElementsByTagName('xf')].map(x => ({
+    fillId: Number(x.getAttribute('fillId') || 0),
+    fontId: Number(x.getAttribute('fontId') || 0),
+  })) : [];
+
+  return { fills, fonts, xfs };
 }
 
 function readCellValue(c, sst){
@@ -645,44 +799,52 @@ function readCellValue(c, sst){
   return Number.isNaN(n) ? vEl.textContent : n;
 }
 
-async function readSheet(zip, sheetName){
-  const wb = await loadXml(zip, 'xl/workbook.xml');
-  const rels = await loadXml(zip, 'xl/_rels/workbook.xml.rels');
-  const sheetEl = [...wb.getElementsByTagName('sheet')].find(s => s.getAttribute('name') === sheetName);
-  if (!sheetEl) return null;
+async function readWorkbookContext(zip){
+  const [wb, rels, sst, styles] = await Promise.all([
+    loadXml(zip, 'xl/workbook.xml'),
+    loadXml(zip, 'xl/_rels/workbook.xml.rels'),
+    readSharedStrings(zip),
+    readStyles(zip),
+  ]);
+  const relMap = new Map([...rels.getElementsByTagName('Relationship')].map(r => [
+    r.getAttribute('Id'),
+    r.getAttribute('Target'),
+  ]));
+  const sheetList = [...wb.getElementsByTagName('sheet')].map(s => {
+    const target = relMap.get(s.getAttribute('r:id')) || '';
+    const path = target.startsWith('/') ? target.slice(1) : 'xl/' + target;
+    return { name: s.getAttribute('name'), path };
+  }).filter(s => s.path);
+  return { sheetList, sst, styles };
+}
 
-  const rid = sheetEl.getAttribute('r:id');
-  const rel = [...rels.getElementsByTagName('Relationship')].find(r => r.getAttribute('Id') === rid);
-  if (!rel) return null;
-  const target = rel.getAttribute('Target');
-  const path = target.startsWith('/') ? target.slice(1) : 'xl/' + target;
-
-  const sheet = await loadXml(zip, path);
-  const sst = await readSharedStrings(zip);
-
-  let fillSolid = [], xfFill = [];
-  const sf = zip.file('xl/styles.xml');
-  if (sf) {
-    const styles = new DOMParser().parseFromString(await sf.async('string'), 'application/xml');
-    const fillsEl = styles.getElementsByTagName('fills')[0];
-    const xfsEl = styles.getElementsByTagName('cellXfs')[0];
-    fillSolid = fillsEl ? [...fillsEl.getElementsByTagName('fill')].map(f => {
-      const p = f.getElementsByTagName('patternFill')[0];
-      return !!p && p.getAttribute('patternType') === 'solid';
-    }) : [];
-    xfFill = xfsEl ? [...xfsEl.getElementsByTagName('xf')].map(x => Number(x.getAttribute('fillId') || 0)) : [];
-  }
-
+async function readSheetFromContext(zip, ctx, sheetName){
+  const info = ctx.sheetList.find(s => s.name === sheetName);
+  if (!info) return null;
+  const sheet = await loadXml(zip, info.path);
   const rows = new Map();
+
   for (const c of sheet.getElementsByTagName('c')) {
     const m = /^([A-Z]+)(\d+)$/.exec(c.getAttribute('r') || '');
     if (!m) continue;
     const col = m[1];
     const row = Number(m[2]);
     const s = Number(c.getAttribute('s') || 0);
-    const filled = !!fillSolid[xfFill[s]];
+    const xf = ctx.styles.xfs[s];
+    const fill = xf ? ctx.styles.fills[xf.fillId] : null;
+    const font = xf ? ctx.styles.fonts[xf.fontId] : null;
+    const filled = !!(fill && fill.solid);
+    const bg = filled ? (fill.bg || '#DCE8FF') : null;
+    const fg = font && font.color ? font.color : (bg ? readableInk(bg) : null);
+
     if (!rows.has(row)) rows.set(row, new Map());
-    rows.get(row).set(col, { v: readCellValue(c, sst), filled });
+    rows.get(row).set(col, {
+      v: readCellValue(c, ctx.sst),
+      filled,
+      bg,
+      fg,
+      bold: !!(font && font.bold),
+    });
   }
   return rows;
 }
@@ -692,8 +854,9 @@ async function parseQcFile(file){
     throw new Error('The file reader did not load. Check your internet connection and reload.');
   }
   const zip = await JSZip.loadAsync(file);
+  const ctx = await readWorkbookContext(zip);
 
-  const matrix = await readSheet(zip, 'Matrix');
+  const matrix = await readSheetFromContext(zip, ctx, 'Matrix');
   if (!matrix) throw new Error('This file has no "Matrix" sheet.');
 
   let headerRow = null;
@@ -740,7 +903,7 @@ async function parseQcFile(file){
   }
 
   let batchHint = '', taskHint = '';
-  const summary = await readSheet(zip, 'Summary');
+  const summary = await readSheetFromContext(zip, ctx, 'Summary');
   const pathCell = summary && summary.get(3) && summary.get(3).get('B');
   const path = pathCell && typeof pathCell.v === 'string' ? pathCell.v : '';
   const bm = /batch[_\s-]*(\d+)/i.exec(path);
@@ -781,6 +944,312 @@ function triggerExcelUpdate(rowNo){
   closeExcelMenu();
   $('#attachFile').click();
 }
+
+/* =========================================================
+   IN-BROWSER EXCEL MATRIX PREVIEW MODAL
+   ========================================================= */
+
+const matrixDlg = $('#matrixDlg');
+
+async function openMatrixPreview(rowNo){
+  const r = rowByNo(rowNo);
+  if (!r) return;
+  closeLinkPopover();
+  closeExcelMenu();
+
+  mx.rowNo = rowNo;
+  mx.sheets = [];
+  mx.activeSheet = '';
+  mx.fromFile = false;
+  mx.query = '';
+  mx.filter = 'all';
+  $('#mxSearch').value = '';
+
+  $('#mxTitle').textContent = `Matrix · Job ${r.job || r.no}`;
+  $('#mxSub').textContent = 'Loading…';
+  $('#mxBanner').hidden = true;
+  $('#mxWrap').innerHTML = `<div class="muted" style="padding:24px;text-align:center">Reading workbook…</div>`;
+  if (!matrixDlg.open) matrixDlg.showModal();
+
+  // Try loading the stored .xlsx binary from IndexedDB first
+  const storedFile = r.source && r.source.fileKey ? await excelStore.get(r.source.fileKey) : null;
+  if (storedFile && typeof JSZip !== 'undefined') {
+    try {
+      const zip = await JSZip.loadAsync(storedFile);
+      const ctx = await readWorkbookContext(zip);
+      for (const s of ctx.sheetList) {
+        const rows = await readSheetFromContext(zip, ctx, s.name);
+        if (rows) mx.sheets.push({ name: s.name, rows });
+      }
+      mx.fromFile = true;
+      const mat = mx.sheets.find(s => s.name === 'Matrix');
+      mx.activeSheet = mat ? 'Matrix' : (mx.sheets[0] ? mx.sheets[0].name : '');
+    } catch (err) {
+      console.warn('Could not parse stored Excel for preview:', err);
+    }
+  }
+
+  // Fallback: synthesize Matrix from saved r.tracks if no stored .xlsx binary
+  if (!mx.sheets.length && r.tracks && r.tracks.length) {
+    mx.sheets = [{ name: 'Matrix', rows: null, fallback: true }];
+    mx.activeSheet = 'Matrix';
+    mx.fromFile = false;
+  }
+
+  renderMatrixModal();
+}
+
+function isMatrixSheet(sheet){
+  if (!sheet) return false;
+  if (sheet.fallback) return true;
+  if (!sheet.rows) return false;
+  for (const [, cols] of sheet.rows) {
+    const a = cols.get('A') && cols.get('A').v;
+    if (typeof a === 'string' && a.trim().toLowerCase() === 'track id') return true;
+  }
+  return false;
+}
+
+function renderMatrixModal(){
+  const r = rowByNo(mx.rowNo);
+  if (!r) return;
+
+  const hasStoredFile = !!(r.source && r.source.fileKey);
+  $('#mxDownloadBtn').disabled = !hasStoredFile;
+  $('#mxDownloadBtn').title = hasStoredFile
+    ? `Download ${r.source.name}`
+    : 'Attach/update the .xlsx file once in this browser to enable download';
+
+  $('#mxTitle').textContent = `Excel Preview · Job ${r.job || r.no}`;
+  $('#mxSub').textContent = `${r.source ? r.source.name : 'No file attached'} · ` +
+    `${doneCount(r)} / ${trackCount(r)} tracks done · ${r.frames} frames · ${cuboidsOf(r)} cuboids`;
+
+  const banner = $('#mxBanner');
+  if (!mx.fromFile && mx.sheets.length) {
+    banner.hidden = false;
+    banner.innerHTML =
+      `<span>Showing saved track spans (original <b>.xlsx</b> is not stored in this browser yet — attach it once to see original Excel colors, symbols, and all sheets).</span>` +
+      `<button type="button" class="btn small" id="mxBannerAttach">Attach .xlsx</button>`;
+  } else {
+    banner.hidden = true;
+    banner.innerHTML = '';
+  }
+
+  // Sheet switcher tabs
+  $('#mxSheets').innerHTML = mx.sheets.map(s =>
+    `<button type="button" class="pill small${s.name === mx.activeSheet ? ' on' : ''}" data-mx-sheet="${esc(s.name)}">${esc(s.name)}</button>`
+  ).join('');
+
+  const sheet = mx.sheets.find(s => s.name === mx.activeSheet);
+  const matrixMode = isMatrixSheet(sheet);
+  $('#mxControls').style.display = matrixMode ? 'flex' : 'none';
+
+  if (!sheet) {
+    $('#mxWrap').innerHTML = `<div class="muted" style="padding:32px;text-align:center">No QC file attached to this job yet. Click “Update .xlsx” below to attach one.</div>`;
+    $('#mxFootInfo').textContent = '';
+    return;
+  }
+
+  if (matrixMode) {
+    renderMatrixGrid(r, sheet);
+  } else {
+    renderGenericSheet(sheet);
+  }
+}
+
+function renderMatrixGrid(r, sheet){
+  const byId = new Map((r.tracks || []).map(t => [t.id, t]));
+  const q = mx.query.trim().toLowerCase();
+
+  let frameList = []; // [{ col, label }]
+  let dataRows = [];  // [{ id, cls, track, cells: [{ filled, bg, fg, bold, v }], hasSymbol }]
+
+  if (sheet.fallback) {
+    const maxF = Math.max(0, (r.frames || 0) - 1, ...r.tracks.map(t => t.last ?? 0));
+    const minF = Math.min(0, ...r.tracks.map(t => t.first ?? 0));
+    for (let f = minF; f <= maxF; f++) frameList.push({ col: String(f), label: f });
+
+    dataRows = r.tracks.map(t => {
+      const cells = frameList.map(fc => {
+        const present = t.first !== null && t.last !== null && fc.label >= t.first && fc.label <= t.last;
+        return { filled: present, bg: null, fg: null, bold: false, v: null };
+      });
+      return { id: t.id, cls: t.cls, track: t, cells, hasSymbol: false };
+    });
+  } else {
+    let headerRow = null;
+    for (const [rowNum, cols] of sheet.rows) {
+      const a = cols.get('A') && cols.get('A').v;
+      if (typeof a === 'string' && a.trim().toLowerCase() === 'track id') { headerRow = rowNum; break; }
+    }
+    const headerCols = sheet.rows.get(headerRow);
+    frameList = [...headerCols.entries()]
+      .filter(([, cell]) => typeof cell.v === 'number' && Number.isInteger(cell.v))
+      .sort((a, b) => colToNum(a[0]) - colToNum(b[0]))
+      .map(([col, cell]) => ({ col, label: cell.v }));
+
+    const rowNums = [...sheet.rows.keys()].filter(n => n > headerRow).sort((a, b) => a - b);
+    for (const rn of rowNums) {
+      const cols = sheet.rows.get(rn);
+      const idCell = cols.get('A');
+      if (!idCell || typeof idCell.v !== 'number' || !Number.isInteger(idCell.v)) continue;
+      const clsCell = cols.get('B');
+      const cls = clsCell && clsCell.v !== null ? String(clsCell.v) : '';
+      let hasSymbol = false;
+      const cells = frameList.map(fc => {
+        const c = cols.get(fc.col);
+        if (!c) return { filled: false, bg: null, fg: null, bold: false, v: null };
+        if (c.v !== null && String(c.v).trim() !== '') hasSymbol = true;
+        return c;
+      });
+      dataRows.push({ id: idCell.v, cls, track: byId.get(idCell.v) || null, cells, hasSymbol });
+    }
+  }
+
+  const totalCount = dataRows.length;
+  const undoneCount = dataRows.filter(dr => !dr.track || !dr.track.done).length;
+  const symbolCount = dataRows.filter(dr => dr.hasSymbol).length;
+
+  $('#mxFilterPills').innerHTML = [
+    ['all', 'All', totalCount],
+    ['undone', 'Undone', undoneCount],
+    ['symbols', 'With symbols', symbolCount],
+  ].map(([id, label, count]) =>
+    `<button type="button" class="pill small${mx.filter === id ? ' on' : ''}" data-mx-filter="${id}">${label} <b>${count}</b></button>`
+  ).join('');
+
+  const filtered = dataRows.filter(dr => {
+    if (mx.filter === 'undone' && dr.track && dr.track.done) return false;
+    if (mx.filter === 'symbols' && !dr.hasSymbol) return false;
+    if (q) {
+      const syms = dr.cells.map(c => c.v ?? '').join(' ');
+      const hay = `${dr.id} ${dr.cls} ${syms}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const headHtml =
+    `<tr>` +
+    `<th class="sticky-0" title="Tick track as done">✓</th>` +
+    `<th class="sticky-1">Track</th>` +
+    `<th class="sticky-2">Class</th>` +
+    frameList.map(f => `<th>${esc(f.label)}</th>`).join('') +
+    `</tr>`;
+
+  const bodyHtml = filtered.length
+    ? filtered.map(dr => {
+        const isDone = !!(dr.track && dr.track.done);
+        const cbHtml = dr.track
+          ? `<input type="checkbox" data-mx-track="${dr.id}"${isDone ? ' checked' : ''} aria-label="Mark track ${dr.id} done">`
+          : '–';
+
+        const frameTds = dr.cells.map((c, idx) => {
+          const hasText = c.v !== null && String(c.v).trim() !== '';
+          const classes = ['mx-cell'];
+          const styles = [];
+          if (c.bg) {
+            styles.push(`background:${c.bg}`);
+            if (c.fg) styles.push(`color:${c.fg}`);
+          } else if (c.filled) {
+            classes.push('mx-present');
+          }
+          if (c.bold) styles.push('font-weight:700');
+          if (hasText) classes.push('mx-sym');
+
+          const tip = `Track ${dr.id} · Frame ${frameList[idx].label}` + (hasText ? ` · ${c.v}` : '');
+          return `<td class="${classes.join(' ')}"${styles.length ? ` style="${styles.join(';')}"` : ''} title="${esc(tip)}">${hasText ? esc(c.v) : ''}</td>`;
+        }).join('');
+
+        return `<tr class="${isDone ? 'mx-done' : ''}">` +
+          `<td class="mx-meta sticky-0">${cbHtml}</td>` +
+          `<td class="mx-meta sticky-1">${dr.id}</td>` +
+          `<td class="mx-meta sticky-2" title="${esc(dr.cls)}">${esc(dr.cls)}</td>` +
+          frameTds +
+          `</tr>`;
+      }).join('')
+    : `<tr><td colspan="${frameList.length + 3}" class="empty">No tracks match this filter.</td></tr>`;
+
+  $('#mxWrap').innerHTML = `<table class="mx"><thead>${headHtml}</thead><tbody>${bodyHtml}</tbody></table>`;
+  $('#mxFootInfo').textContent = `Showing ${filtered.length} of ${totalCount} tracks · Click ✓ to tick tracks live.`;
+}
+
+function renderGenericSheet(sheet){
+  const rowNums = [...sheet.rows.keys()].sort((a, b) => a - b);
+  const colSet = new Set();
+  for (const rn of rowNums) {
+    for (const col of sheet.rows.get(rn).keys()) colSet.add(col);
+  }
+  const cols = [...colSet].sort((a, b) => colToNum(a) - colToNum(b));
+
+  if (!rowNums.length || !cols.length) {
+    $('#mxWrap').innerHTML = `<div class="muted" style="padding:32px;text-align:center">This sheet is empty.</div>`;
+    $('#mxFootInfo').textContent = '';
+    return;
+  }
+
+  const headHtml = `<tr><th>#</th>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr>`;
+  const bodyHtml = rowNums.map(rn => {
+    const map = sheet.rows.get(rn);
+    const tds = cols.map(col => {
+      const c = map.get(col);
+      if (!c) return `<td></td>`;
+      const styles = [];
+      if (c.bg) styles.push(`background:${c.bg}`);
+      if (c.fg) styles.push(`color:${c.fg}`);
+      if (c.bold) styles.push('font-weight:600');
+      const txt = c.v ?? '';
+      return `<td${styles.length ? ` style="${styles.join(';')}"` : ''} title="${esc(txt)}">${esc(txt)}</td>`;
+    }).join('');
+    return `<tr><td class="muted">${rn}</td>${tds}</tr>`;
+  }).join('');
+
+  $('#mxWrap').innerHTML = `<table class="mx mx-generic"><thead>${headHtml}</thead><tbody>${bodyHtml}</tbody></table>`;
+  $('#mxFootInfo').textContent = `Sheet "${sheet.name}" · ${rowNums.length} rows × ${cols.length} columns`;
+}
+
+matrixDlg.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) { matrixDlg.close(); return; }
+  if (e.target.closest('#mxBannerAttach')) { triggerExcelUpdate(mx.rowNo); return; }
+
+  const tab = e.target.closest('[data-mx-sheet]');
+  if (tab) {
+    mx.activeSheet = tab.dataset.mxSheet;
+    renderMatrixModal();
+    return;
+  }
+
+  const flt = e.target.closest('[data-mx-filter]');
+  if (flt) {
+    mx.filter = flt.dataset.mxFilter;
+    renderMatrixModal();
+  }
+});
+
+matrixDlg.addEventListener('change', e => {
+  const cb = e.target.closest('input[data-mx-track]');
+  const r = rowByNo(mx.rowNo);
+  if (!cb || !r) return;
+  const t = r.tracks.find(x => x.id === Number(cb.dataset.mxTrack));
+  if (!t) return;
+  t.done = cb.checked;
+  refreshAnno(r);
+  render();
+  if (trkDlg.open && openRowNo === r.no) renderTrackDialog();
+  renderMatrixModal();
+});
+
+matrixDlg.addEventListener('close', () => {
+  mx.rowNo = null;
+  mx.sheets = [];
+});
+
+$('#mxSearch').addEventListener('input', e => {
+  mx.query = e.target.value;
+  renderMatrixModal();
+});
+$('#mxDownloadBtn').addEventListener('click', () => downloadJobExcel(rowByNo(mx.rowNo)));
+$('#mxUpdateBtn').addEventListener('click', () => triggerExcelUpdate(mx.rowNo));
 
 /* =========================================================
    NOTION-STYLE LINK POPOVER
@@ -925,14 +1394,18 @@ function openExcelMenu(rowNo, anchor){
   xmRowNo = rowNo;
 
   const hasFile = !!(r.source && r.source.fileKey);
+  const hasPreview = hasFile || trackCount(r) > 0;
   const nameText = r.source ? r.source.name : 'No QC file attached';
 
   excelMenu.innerHTML = `
     <div class="xm">
       <div class="xm-head" title="${esc(nameText)}">${esc(nameText)}</div>
+      <button type="button" class="xm-btn" data-xm-preview ${hasPreview ? '' : 'disabled'}>
+        <span>Preview Matrix</span>
+      </button>
       <button type="button" class="xm-btn" data-xm-open ${hasFile ? '' : 'disabled'}
         title="${hasFile ? 'Download and open in Excel' : 'Attach the .xlsx file once in this browser to enable download'}">
-        <span>Open / Download .xlsx</span>
+        <span>Download .xlsx</span>
       </button>
       <button type="button" class="xm-btn" data-xm-update>
         <span>${r.source ? 'Update .xlsx (keeps ticks)' : 'Attach .xlsx'}</span>
@@ -944,7 +1417,9 @@ function openExcelMenu(rowNo, anchor){
 excelMenu.addEventListener('click', e => {
   const r = rowByNo(xmRowNo);
   if (!r) return;
-  if (e.target.closest('[data-xm-open]')) {
+  if (e.target.closest('[data-xm-preview]')) {
+    openMatrixPreview(r.no);
+  } else if (e.target.closest('[data-xm-open]')) {
     closeExcelMenu();
     downloadJobExcel(r);
   } else if (e.target.closest('[data-xm-update]')) {
@@ -1095,7 +1570,7 @@ function renderTable(){
     const body = rows.map(r =>
       `<tr>${cols.map(c => `<td class="${isNumeric(c) ? 'num' : ''}">${cell(c, r)}</td>`).join('')}` +
       `<td><div class="row-actions">` +
-      `<button type="button" class="btn small" data-excel-menu="${r.no}" title="Open or update QC Excel file">Excel</button>` +
+      `<button type="button" class="btn small" data-excel-menu="${r.no}" title="Preview, download, or update QC Excel file">Excel</button>` +
       `<button type="button" class="btn danger small" data-delete="${r.no}">Delete</button>` +
       `</div></td></tr>`
     ).join('');
@@ -1154,6 +1629,7 @@ function renderTrackDialog(){
     : `<div class="muted">No clusters yet. Type IDs above and press Tick.</div>`;
 
   const hasStoredFile = !!(r.source && r.source.fileKey);
+  $('#previewMatrixBtn').disabled = !(hasStoredFile || n > 0);
   const openBtn = $('#openExcelBtn');
   openBtn.disabled = !hasStoredFile;
   openBtn.title = hasStoredFile
@@ -1429,9 +1905,7 @@ function backupData(){
    EVENTS
    ========================================================= */
 
-// Table and page buttons
 document.addEventListener('click', e => {
-  // Collapse floating popovers when clicking outside them
   if (!linkPop.hidden && !e.target.closest('#linkPopover, [data-link-add], [data-link-row]')) {
     closeLinkPopover();
   }
@@ -1474,7 +1948,6 @@ document.addEventListener('click', e => {
   render();
 });
 
-// Hovering an existing link opens the Notion-style preview popover
 $('#body').addEventListener('mouseover', e => {
   const linkEl = e.target.closest('a[data-link-row]');
   if (!linkEl || lpMode === 'edit') return;
@@ -1488,7 +1961,6 @@ $('#body').addEventListener('mouseout', e => {
   scheduleLinkHide();
 });
 
-// Escape / scroll collapse popovers cleanly
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeLinkPopover();
@@ -1499,7 +1971,6 @@ document.addEventListener('keydown', e => {
 window.addEventListener('scroll', () => { closeLinkPopover(); closeExcelMenu(); }, true);
 window.addEventListener('resize', () => { closeLinkPopover(); closeExcelMenu(); });
 
-// Editing fields in the table
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]');
   if (!el) return;
@@ -1543,6 +2014,7 @@ $('#clusterApply').addEventListener('click', applyCluster);
 $('#clusterInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); applyCluster(); }
 });
+$('#previewMatrixBtn').addEventListener('click', () => openMatrixPreview(openRowNo));
 $('#openExcelBtn').addEventListener('click', () => downloadJobExcel(currentRow()));
 $('#attachBtn').addEventListener('click', () => triggerExcelUpdate(openRowNo));
 
@@ -1564,6 +2036,9 @@ $('#attachFile').addEventListener('change', async e => {
     if (trkDlg.open && openRowNo === r.no) {
       renderTrackDialog();
       setStatus(`Read ${parsed.tracks.length} tracks, ${parsed.frames} frames, ${parsed.tracks.reduce((a, t) => a + t.cuboids, 0)} cuboids.`);
+    }
+    if (matrixDlg.open && mx.rowNo === r.no) {
+      openMatrixPreview(r.no);
     }
   } catch (err) {
     alert('Could not read this file: ' + err.message);
