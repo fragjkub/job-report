@@ -74,17 +74,22 @@
 
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
 
-  /* Compact link cell + Notion-style floating popover */
-  a.open{color:var(--accent);text-decoration:underline;text-decoration-color:rgba(47,91,234,.35);text-underline-offset:3px;font-weight:500}
-  a.open:hover{text-decoration-color:var(--accent)}
-  .addlink{background:none;border:0;padding:2px 4px;font:inherit;color:var(--muted);text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer;border-radius:4px}
-  .addlink:hover{color:var(--ink);background:var(--field)}
+  /* Open link cell + Notion-style floating popover */
+  a.open, button.open{
+    display:inline-block;background:none;border:0;padding:2px 4px;font:inherit;font-weight:500;cursor:pointer;
+    color:var(--accent);text-decoration:underline;text-decoration-color:rgba(47,91,234,.35);
+    text-underline-offset:3px;border-radius:4px;
+  }
+  a.open:hover, button.open:hover{text-decoration-color:var(--accent)}
+  button.open.empty{color:var(--muted);text-decoration:underline dotted var(--muted)}
+  button.open.empty:hover{color:var(--ink);background:var(--field)}
 
   .popover{
     position:fixed;z-index:1000;background:#fff;border:1px solid var(--line);
     border-radius:8px;box-shadow:0 8px 24px rgba(16,24,40,.14),0 1px 3px rgba(16,24,40,.06);
     padding:4px 6px;
   }
+  .popover::before{content:"";position:absolute;left:0;right:0;top:-10px;height:10px}
   .popover[hidden]{display:none}
 
   .lp-preview{display:flex;align-items:center;gap:4px;min-height:28px}
@@ -94,6 +99,7 @@
   }
   .lp-url:hover{background:var(--hover);color:var(--ink)}
   .lp-url-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+  .lp-globe{display:inline-flex;align-items:center;color:var(--muted);flex:none;margin-left:2px}
   .lp-icon-btn{
     display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
     border:0;background:transparent;color:var(--muted);border-radius:5px;cursor:pointer;flex:none;
@@ -108,7 +114,7 @@
 
   .lp-edit{display:flex;align-items:center;gap:6px;padding:2px}
   .lp-input{
-    width:270px;border:1px solid var(--line);border-radius:6px;padding:5px 8px;
+    width:260px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;
     font:inherit;font-size:13px;color:var(--ink);background:#fff;
   }
   .lp-input:focus{border-color:var(--accent);outline:none}
@@ -367,7 +373,7 @@
 const CONFIG = {
   title: 'My jobs',
   reportName: 'Dũng',   // name written in the report header
-  openLabel: 'Open',    // text of the link in the "Open link" column
+  openLabel: 'Open',    // text shown in the "Open link" column
 };
 
 const STAGES = [
@@ -612,8 +618,8 @@ const isNumeric = c => ['num', 'progress', 'issues', 'auto'].includes(c.type);
 function normalizeUrl(raw){
   const s = String(raw || '').trim();
   if (!s) return '';
+  if (/^(javascript|data|vbscript):/i.test(s)) return '';
   if (/^https?:\/\//i.test(s)) return s;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return '';
   return 'https://' + s;
 }
 
@@ -670,9 +676,9 @@ function positionPopover(pop, anchor){
   pop.hidden = false;
   const pw = pop.offsetWidth;
   const ph = pop.offsetHeight;
-  let top = rect.bottom + 6;
+  let top = rect.bottom + 5;
   if (top + ph > window.innerHeight - 10) {
-    top = Math.max(8, rect.top - ph - 6);
+    top = Math.max(8, rect.top - ph - 5);
   }
   let left = rect.left;
   if (left + pw > window.innerWidth - 10) {
@@ -851,20 +857,17 @@ async function readSheetFromContext(zip, ctx, sheetName){
   return rows;
 }
 
-// Find the "v" tick column right after the last frame column without clobbering other headers
 function findTickCol(headerColsMap, maxFrameColNum){
   const candidates = [...headerColsMap.entries()]
     .map(([col, cell]) => ({ col, num: colToNum(col), val: cell.v }))
     .filter(x => x.num > maxFrameColNum)
     .sort((a, b) => a.num - b.num);
 
-  // Reuse an explicit v / done / tick column if present
   const existing = candidates.find(x =>
     typeof x.val === 'string' && /^(v|✓|done|tick)$/i.test(x.val.trim())
   );
   if (existing) return { col: existing.col, num: existing.num, hasHeader: true };
 
-  // Otherwise pick the first column after the last frame with an empty header
   let n = maxFrameColNum + 1;
   while (true) {
     const col = numToCol(n);
@@ -947,7 +950,6 @@ async function parseQcFile(file){
   return { frames, tracks, source: file.name, batchHint, taskHint };
 }
 
-// Write/clear "v" ticks directly inside the Matrix worksheet XML
 function setInlineCell(doc, ns, rowEl, rowNum, colLetter, colNum, text){
   const ref = colLetter + rowNum;
   const cells = [...rowEl.children].filter(el => el.localName === 'c');
@@ -981,7 +983,6 @@ function setInlineCell(doc, ns, rowEl, rowNum, colLetter, colNum, text){
   isEl.appendChild(tEl);
   cEl.appendChild(isEl);
 
-  // Keep row spans attribute valid if present
   const spans = rowEl.getAttribute('spans');
   const sm = /^(\d+):(\d+)$/.exec(spans || '');
   if (sm && Number(sm[2]) < colNum) {
@@ -1000,7 +1001,6 @@ async function syncTicksIntoWorkbook(file, r){
   const ns = sheetDoc.documentElement.namespaceURI || 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   const rowEls = [...sheetDoc.getElementsByTagName('row')];
 
-  // Locate header row ("Track ID" in col A)
   let headerRowEl = null;
   let headerRowNum = null;
   const headerColsMap = new Map();
@@ -1031,12 +1031,10 @@ async function syncTicksIntoWorkbook(file, r){
   const tickCol = findTickCol(headerColsMap, maxFrameColNum);
   const doneById = new Map((r.tracks || []).map(t => [t.id, !!t.done]));
 
-  // Write "v" header only if the tick column header was blank
   if (!tickCol.hasHeader) {
     setInlineCell(sheetDoc, ns, headerRowEl, headerRowNum, tickCol.col, tickCol.num, 'v');
   }
 
-  // Sync each track row's "v" cell
   for (const rowEl of rowEls) {
     const rn = Number(rowEl.getAttribute('r') || 0);
     if (rn <= headerRowNum) continue;
@@ -1049,7 +1047,6 @@ async function syncTicksIntoWorkbook(file, r){
     setInlineCell(sheetDoc, ns, rowEl, rn, tickCol.col, tickCol.num, doneById.get(idVal) ? 'v' : '');
   }
 
-  // Expand <dimension ref="..."/> if tickCol extends past the original used range
   const dimEl = sheetDoc.getElementsByTagName('dimension')[0];
   if (dimEl) {
     const dm = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/.exec(dimEl.getAttribute('ref') || '');
@@ -1483,7 +1480,6 @@ matrixDlg.addEventListener('click', e => {
     return;
   }
 
-  // Click anywhere on a track row to toggle v
   const rowEl = e.target.closest('tr[data-mx-row]');
   if (rowEl) {
     const r = rowByNo(mx.rowNo);
@@ -1515,7 +1511,7 @@ $('#mxDownloadBtn').addEventListener('click', () => downloadJobExcel(rowByNo(mx.
 $('#mxUpdateBtn').addEventListener('click', () => triggerExcelUpdate(mx.rowNo));
 
 /* =========================================================
-   NOTION-STYLE LINK POPOVER
+   NOTION-STYLE LINK POPOVER (hover on "Open" to preview/add)
    ========================================================= */
 
 const ICON_GLOBE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
@@ -1524,8 +1520,8 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 
 const linkPop = $('#linkPopover');
 let lpRowNo = null;
-let lpMode = null;
 let lpAnchor = null;
+let lpLocked = false;    // true once user clicks Edit / focuses the URL input
 let lpHideTimer = null;
 
 function cancelLinkHide(){
@@ -1534,10 +1530,10 @@ function cancelLinkHide(){
 
 function scheduleLinkHide(){
   cancelLinkHide();
-  if (lpMode !== 'preview') return;
+  if (lpLocked) return;
   lpHideTimer = setTimeout(() => {
-    if (lpMode === 'preview') closeLinkPopover();
-  }, 180);
+    if (!lpLocked) closeLinkPopover();
+  }, 240);
 }
 
 function closeLinkPopover(){
@@ -1545,57 +1541,63 @@ function closeLinkPopover(){
   linkPop.hidden = true;
   linkPop.innerHTML = '';
   lpRowNo = null;
-  lpMode = null;
   lpAnchor = null;
+  lpLocked = false;
 }
 
-function openLinkPreview(rowNo, anchor){
-  const r = rowByNo(rowNo);
-  if (!r || !r.link) return;
-  cancelLinkHide();
-  closeExcelMenu();
-  lpRowNo = rowNo;
-  lpMode = 'preview';
-  lpAnchor = anchor;
-
-  linkPop.innerHTML = `
-    <div class="lp-preview">
-      <a class="lp-url" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener" title="${esc(r.link)}">
-        ${ICON_GLOBE}
-        <span class="lp-url-text">${esc(r.link)}</span>
-      </a>
-      <button type="button" class="lp-icon-btn" data-lp-copy title="Copy link" aria-label="Copy link">${ICON_COPY}</button>
-      <button type="button" class="lp-edit-btn" data-lp-edit>Edit</button>
-    </div>`;
-  positionPopover(linkPop, anchor);
-}
-
-function openLinkEdit(rowNo, anchor){
+function openLinkPopover(rowNo, anchor, { forceEdit = false, focus = false } = {}){
   const r = rowByNo(rowNo);
   if (!r) return;
   cancelLinkHide();
   closeExcelMenu();
+
   lpRowNo = rowNo;
-  lpMode = 'edit';
   lpAnchor = anchor || lpAnchor;
+  if (!lpAnchor) return;
 
-  linkPop.innerHTML = `
-    <form class="lp-edit" id="lpForm" autocomplete="off">
-      <input type="text" inputmode="url" class="lp-input" id="lpInput"
-        value="${esc(r.link)}" placeholder="Paste link and press Enter…" aria-label="Link URL">
-      <button type="submit" class="btn primary small">Save</button>
-      ${r.link ? `<button type="button" class="lp-icon-btn" data-lp-clear title="Remove link" aria-label="Remove link">×</button>` : ''}
-    </form>`;
-  positionPopover(linkPop, lpAnchor);
-
-  const input = $('#lpInput');
-  if (input) { input.focus(); input.select(); }
+  if (r.link && !forceEdit) {
+    lpLocked = false;
+    linkPop.innerHTML = `
+      <div class="lp-preview">
+        <a class="lp-url" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener" title="${esc(r.link)}">
+          ${ICON_GLOBE}
+          <span class="lp-url-text">${esc(r.link)}</span>
+        </a>
+        <button type="button" class="lp-icon-btn" data-lp-copy title="Copy link" aria-label="Copy link">${ICON_COPY}</button>
+        <button type="button" class="lp-edit-btn" data-lp-edit>Edit</button>
+      </div>`;
+    positionPopover(linkPop, lpAnchor);
+  } else {
+    lpLocked = !!focus;
+    linkPop.innerHTML = `
+      <form class="lp-edit" id="lpForm" autocomplete="off">
+        <span class="lp-globe">${ICON_GLOBE}</span>
+        <input type="text" inputmode="url" class="lp-input" id="lpInput"
+          value="${esc(r.link)}" placeholder="Paste link…" aria-label="Link URL">
+        <button type="submit" class="btn primary small">OK</button>
+        ${r.link ? `<button type="button" class="lp-icon-btn" data-lp-clear title="Remove link" aria-label="Remove link">×</button>` : ''}
+      </form>`;
+    positionPopover(linkPop, lpAnchor);
+    if (focus) {
+      const input = $('#lpInput');
+      if (input) { input.focus(); input.select(); }
+    }
+  }
 }
 
 linkPop.addEventListener('mouseenter', cancelLinkHide);
 linkPop.addEventListener('mouseleave', scheduleLinkHide);
 
+linkPop.addEventListener('focusin', e => {
+  if (e.target.id === 'lpInput') {
+    cancelLinkHide();
+    lpLocked = true;
+  }
+});
+
 linkPop.addEventListener('click', async e => {
+  e.stopPropagation();
+
   const copyBtn = e.target.closest('[data-lp-copy]');
   if (copyBtn) {
     const r = rowByNo(lpRowNo);
@@ -1613,7 +1615,7 @@ linkPop.addEventListener('click', async e => {
   }
 
   if (e.target.closest('[data-lp-edit]')) {
-    openLinkEdit(lpRowNo, lpAnchor);
+    openLinkPopover(lpRowNo, lpAnchor, { forceEdit: true, focus: true });
     return;
   }
 
@@ -1631,9 +1633,11 @@ linkPop.addEventListener('submit', e => {
   const input = $('#lpInput');
   if (r && input) {
     r.link = normalizeUrl(input.value);
+    closeLinkPopover();
     render();
+  } else {
+    closeLinkPopover();
   }
-  closeLinkPopover();
 });
 
 /* =========================================================
@@ -1678,6 +1682,7 @@ function openExcelMenu(rowNo, anchor){
 }
 
 excelMenu.addEventListener('click', e => {
+  e.stopPropagation();
   const r = rowByNo(xmRowNo);
   if (!r) return;
   if (e.target.closest('[data-xm-preview]')) {
@@ -1812,7 +1817,7 @@ function cell(col, r){
     case 'link':
       return r.link
         ? `<a class="open" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener" data-link-row="${r.no}">${esc(CONFIG.openLabel)}</a>`
-        : `<button type="button" class="addlink" data-link-add="${r.no}">Add link</button>`;
+        : `<button type="button" class="open empty" data-link-row="${r.no}" title="Hover or click to add link">${esc(CONFIG.openLabel)}</button>`;
 
     default:
       return esc(r[col.key] ?? '–');
@@ -2053,16 +2058,16 @@ function backupData(){
    ========================================================= */
 
 document.addEventListener('click', e => {
-  if (!linkPop.hidden && !e.target.closest('#linkPopover, [data-link-add], [data-link-row]')) {
+  if (!linkPop.hidden && !e.target.closest('#linkPopover, [data-link-row]')) {
     closeLinkPopover();
   }
   if (!excelMenu.hidden && !e.target.closest('#excelMenu, [data-excel-menu]')) {
     closeExcelMenu();
   }
 
-  const addLinkBtn = e.target.closest('[data-link-add]');
-  if (addLinkBtn) {
-    openLinkEdit(Number(addLinkBtn.dataset.linkAdd), addLinkBtn);
+  const emptyOpenBtn = e.target.closest('button[data-link-row]');
+  if (emptyOpenBtn) {
+    openLinkPopover(Number(emptyOpenBtn.dataset.linkRow), emptyOpenBtn, { forceEdit: true, focus: true });
     return;
   }
 
@@ -2095,14 +2100,17 @@ document.addEventListener('click', e => {
   render();
 });
 
+// Hovering "Open" (empty or linked) shows the Notion-style bar underneath
 $('#body').addEventListener('mouseover', e => {
-  const linkEl = e.target.closest('a[data-link-row]');
-  if (!linkEl || lpMode === 'edit') return;
-  openLinkPreview(Number(linkEl.dataset.linkRow), linkEl);
+  const linkEl = e.target.closest('[data-link-row]');
+  if (!linkEl || lpLocked) return;
+  const rowNo = Number(linkEl.dataset.linkRow);
+  if (!linkPop.hidden && lpRowNo === rowNo) { cancelLinkHide(); return; }
+  openLinkPopover(rowNo, linkEl, { forceEdit: false, focus: false });
 });
 
 $('#body').addEventListener('mouseout', e => {
-  const linkEl = e.target.closest('a[data-link-row]');
+  const linkEl = e.target.closest('[data-link-row]');
   if (!linkEl) return;
   if (e.relatedTarget && (linkEl.contains(e.relatedTarget) || linkPop.contains(e.relatedTarget))) return;
   scheduleLinkHide();
@@ -2115,7 +2123,12 @@ document.addEventListener('keydown', e => {
   }
 });
 
-window.addEventListener('scroll', () => { closeLinkPopover(); closeExcelMenu(); }, true);
+// Ignore scroll events inside the popovers themselves (e.g. pasting a long URL)
+window.addEventListener('scroll', e => {
+  if (e.target instanceof Node && (linkPop.contains(e.target) || excelMenu.contains(e.target))) return;
+  closeLinkPopover();
+  closeExcelMenu();
+}, true);
 window.addEventListener('resize', () => { closeLinkPopover(); closeExcelMenu(); });
 
 document.addEventListener('change', e => {
