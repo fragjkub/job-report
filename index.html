@@ -37,6 +37,7 @@
 
   .search{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;min-width:220px;background:#fff}
   .btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer}
+  .btn:disabled{opacity:.45;cursor:default}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.danger{color:var(--danger);border-color:#F3C4C0}
   .btn.small{padding:4px 9px;font-size:12px}
@@ -50,18 +51,10 @@
   th.num{text-align:right}
   td.empty{text-align:center;color:var(--muted);padding:32px}
 
-  input.cell-text,input.cell-num{
-    border:1px solid transparent;background:transparent;border-radius:5px;padding:4px 6px;font:inherit;color:var(--ink);
-  }
-  input.cell-text{width:110px}
-  input.cell-num{width:76px;text-align:right;font-variant-numeric:tabular-nums}
-  input.cell-text:hover,input.cell-num:hover{border-color:var(--line)}
-  input.cell-text:focus,input.cell-num:focus{background:#fff;border-color:var(--accent);outline:none}
-  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  input[type=number]{-moz-appearance:textfield}
+  input.cell-text{border:1px solid transparent;background:transparent;border-radius:5px;padding:4px 6px;font:inherit;color:var(--ink);width:110px}
+  input.cell-text:hover{border-color:var(--line)}
+  input.cell-text:focus{background:#fff;border-color:var(--accent);outline:none}
 
-  .prog{display:inline-flex;align-items:center;gap:4px}
-  .prog .sep{color:var(--muted)}
   .bar{display:inline-block;width:110px;height:6px;background:#E8ECF1;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:8px}
   .bar i{display:block;height:100%;background:var(--accent)}
   .bar.done i{background:var(--ok)}
@@ -77,7 +70,7 @@
 
   select.inline{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit;background:#fff;cursor:pointer}
 
-  /* Open link: Open button, plus a grey box that appears on hover to edit the link */
+  /* Open link: the link button, plus a grey box that appears on hover to edit the link */
   .linkcell{display:inline-flex;align-items:center;gap:8px}
   a.open{color:var(--accent);text-decoration:none;font-weight:500}
   a.open:hover{text-decoration:underline}
@@ -89,17 +82,33 @@
   .linkbox:focus{background:#fff;border-color:var(--accent);outline:none}
 
   dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(580px,92vw);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.2)}
+  dialog.wide{width:min(740px,94vw)}
   dialog::backdrop{background:rgba(16,24,40,.35)}
   .dlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
   .dlg-head h2{font-size:16px;font-weight:600;margin:0}
-  #dlgBody{padding:14px 18px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow:auto}
+  .dlg-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px;max-height:65vh;overflow:auto}
+  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .muted{color:var(--muted)}
+
   .note{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
   .note.done{opacity:.6}
   .note textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;resize:vertical;min-height:52px}
   .note-meta{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
   .note-meta .at{margin-right:auto}
-  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
-  .muted{color:var(--muted)}
+
+  .field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+  .field input,.field select,.field-input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--ink);background:#fff}
+  .field-input{flex:1;min-width:220px}
+  .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+
+  .left{font-size:13px;color:var(--muted);word-break:break-word}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
+  .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;cursor:pointer;font-variant-numeric:tabular-nums;user-select:none}
+  .chip input{margin:0}
+  .chip.on{background:#E2F4EA;border-color:#9ED5B5;color:#1E7F4F}
+  .section-title{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .loglist{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto}
+  .logitem{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff}
 
   #reportText{width:100%;min-height:340px;border:1px solid var(--line);border-radius:8px;padding:12px;font:13px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--ink);resize:vertical;background:#FBFCFD}
 
@@ -122,6 +131,7 @@
       <button id="backup" class="btn" type="button">Backup</button>
       <button id="restore" class="btn" type="button">Restore</button>
       <input id="restoreFile" type="file" accept="application/json,.json" hidden>
+      <input id="attachFile" type="file" accept=".xlsx" hidden>
     </div>
   </header>
 
@@ -143,6 +153,7 @@
 
 </div>
 
+<!-- Notes dialog (open issues) -->
 <dialog id="notesDlg" aria-labelledby="dlgTitle">
   <div class="dlg-head">
     <div>
@@ -151,13 +162,69 @@
     </div>
     <button type="button" class="btn small" data-close>Close</button>
   </div>
-  <div id="dlgBody"></div>
+  <div class="dlg-body" id="dlgBody"></div>
   <div class="dlg-foot">
     <span class="sub">Unresolved notes are counted as open issues.</span>
     <button type="button" class="btn primary" id="addNote">+ Add note</button>
   </div>
 </dialog>
 
+<!-- Track checklist dialog (cluster ticking) -->
+<dialog id="trkDlg" class="wide" aria-labelledby="trkTitle">
+  <div class="dlg-head">
+    <div>
+      <h2 id="trkTitle"></h2>
+      <div class="sub" id="trkSub"></div>
+    </div>
+    <button type="button" class="btn small" data-close>Close</button>
+  </div>
+  <div class="dlg-body">
+    <div class="row">
+      <input id="clusterInput" class="field-input" placeholder="Cluster, e.g. 65 48 32 47 2 1" autocomplete="off">
+      <button id="clusterApply" class="btn primary" type="button">Tick</button>
+    </div>
+    <div class="sub" id="clusterStatus"></div>
+    <div class="left" id="trkLeft"></div>
+    <div class="chips" id="trkChips"></div>
+    <div>
+      <div class="section-title">Cluster log (in the order you handled them)</div>
+      <div class="loglist" id="trkLog"></div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" id="attachBtn" type="button">Attach QC file</button>
+    <span class="sub">Re-reading the file keeps the ticks for IDs that are still in it.</span>
+  </div>
+</dialog>
+
+<!-- New job dialog -->
+<dialog id="newDlg" aria-labelledby="newTitle">
+  <div class="dlg-head">
+    <div>
+      <h2 id="newTitle">New job</h2>
+      <div class="sub">Choose the qc_report.xlsx first. Tracks, frames and cuboids are read from it.</div>
+    </div>
+    <button type="button" class="btn small" data-close>Close</button>
+  </div>
+  <div class="dlg-body">
+    <label class="field">QC file (.xlsx)
+      <input type="file" id="newFile" accept=".xlsx">
+    </label>
+    <div class="sub" id="newPreview"></div>
+    <div class="grid4">
+      <label class="field">Batch <input id="newBatch" type="text"></label>
+      <label class="field">Task <input id="newTask" type="text"></label>
+      <label class="field">Job <input id="newJob" type="text"></label>
+      <label class="field">QC <select id="newQc"></select></label>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <span class="sub">Assigned time is recorded when you create the job.</span>
+    <button class="btn primary" id="createJob" type="button" disabled>Create job</button>
+  </div>
+</dialog>
+
+<!-- Report dialog -->
 <dialog id="reportDlg" aria-labelledby="reportTitle">
   <div class="dlg-head">
     <div>
@@ -166,7 +233,7 @@
     </div>
     <button type="button" class="btn small" data-close>Close</button>
   </div>
-  <div style="padding:14px 18px">
+  <div class="dlg-body">
     <textarea id="reportText" readonly></textarea>
   </div>
   <div class="dlg-foot">
@@ -174,6 +241,9 @@
     <button type="button" class="btn primary" id="copyReport">Copy</button>
   </div>
 </dialog>
+
+<!-- JSZip reads the .xlsx file in the browser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
 /* =========================================================
@@ -186,7 +256,7 @@ const CONFIG = {
   openLabel: 'Open',    // text of the link button in the "Open link" column
 };
 
-// Stages. Anno stages come from the annotated count (automatic).
+// Stages. Anno stages come from the tracks ticked as done (automatic).
 // QC stages are set with the QC status dropdown.
 const STAGES = [
   { id:'todo',        label:'Not started',      color:'#4B5563', tint:'#EEF1F5' },
@@ -207,16 +277,16 @@ const QC_STATUS = [
 const QC_REVIEWERS = ['Huyền', 'Chi', 'Huy', 'Long'];
 
 // Columns. "visible" = shown when the page first loads.
-// The Columns pills let you turn any of them on or off.
+// Frame, TrackID and Cuboid are read from the QC file and cannot be typed in.
 const COLUMNS = [
   { key:'no',          label:'No.',             type:'text',     visible:true },
   { key:'batch',       label:'Batch',           type:'text',     visible:true },
   { key:'task',        label:'Task',            type:'text',     visible:true },
   { key:'job',         label:'Job',             type:'text',     visible:true },
   { key:'qc',          label:'QC',              type:'qc',       visible:true },
-  { key:'frame',       label:'Frame',           type:'num',      visible:true },
-  { key:'trackId',     label:'TrackID',         type:'num',      visible:true },
-  { key:'cuboid',      label:'Cuboid',          type:'num',      visible:true },
+  { key:'frames',      label:'Frame',           type:'auto',     visible:true },
+  { key:'trackCount',  label:'TrackID',         type:'auto',     visible:true },
+  { key:'cuboidTotal', label:'Cuboid',          type:'auto',     visible:true },
   { key:'progress',    label:'Annotating',      type:'progress', visible:true },
   { key:'issues',      label:'Open issues',     type:'issues',   visible:true },
   { key:'stage',       label:'Stage',           type:'stage',    visible:true },
@@ -232,32 +302,98 @@ const COLUMNS = [
    Use Backup / Restore to keep a copy or move to another computer.
    ========================================================= */
 
-const STORAGE_KEY = 'jobReport.v1';
+const STORAGE_KEY = 'jobReport.v2';
 
 // Used only the first time, when nothing is saved yet.
+// Job 2772 is read from the qc_report.xlsx you sent. Job 2901 has no file yet.
 const SEED = [
-  { no:1, batch:3, task:2772, job:3269, qc:'Huy', frame:30, trackId:55,  cuboid:1100, annotated:55,  total:55  },
-  { no:2, batch:3, task:2901, job:3398, qc:'Huy', frame:30, trackId:115, cuboid:3000, annotated:115, total:115 },
+  {
+    no:1, batch:3, task:2772, job:3269, qc:'Huy', qcState:'',
+    source:{ name:'qc_report.xlsx', importedAt:'2026-11-11T08:52' },
+    frames:30,
+    tracks:[
+      { id:1, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:2, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:3, cls:'vehicles', first:0, last:12, cuboids:13, done:false },
+      { id:4, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:5, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:6, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:7, cls:'vehicles', first:0, last:12, cuboids:13, done:false },
+      { id:8, cls:'vehicles', first:0, last:18, cuboids:19, done:false },
+      { id:9, cls:'pedestrian', first:0, last:20, cuboids:21, done:false },
+      { id:10, cls:'vehicles', first:0, last:16, cuboids:17, done:false },
+      { id:11, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:12, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:13, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:14, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:15, cls:'vehicles', first:0, last:16, cuboids:17, done:false },
+      { id:16, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:17, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:18, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:19, cls:'vehicles', first:0, last:17, cuboids:18, done:false },
+      { id:20, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:21, cls:'two-wheels', first:0, last:26, cuboids:27, done:false },
+      { id:22, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:23, cls:'two-wheels', first:0, last:28, cuboids:29, done:false },
+      { id:24, cls:'vehicles', first:0, last:21, cuboids:22, done:false },
+      { id:25, cls:'vehicles', first:0, last:13, cuboids:14, done:false },
+      { id:26, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:27, cls:'vehicles', first:0, last:17, cuboids:18, done:false },
+      { id:28, cls:'vehicles', first:0, last:29, cuboids:30, done:false },
+      { id:29, cls:'vehicles', first:0, last:16, cuboids:17, done:false },
+      { id:30, cls:'two-wheels', first:0, last:29, cuboids:30, done:false },
+      { id:31, cls:'vehicles', first:0, last:20, cuboids:21, done:false },
+      { id:32, cls:'vehicles', first:0, last:18, cuboids:19, done:false },
+      { id:33, cls:'two-wheels', first:3, last:29, cuboids:27, done:false },
+      { id:34, cls:'two-wheels', first:4, last:18, cuboids:15, done:false },
+      { id:35, cls:'two-wheels', first:5, last:29, cuboids:25, done:false },
+      { id:36, cls:'two-wheels', first:6, last:29, cuboids:24, done:false },
+      { id:37, cls:'two-wheels', first:13, last:29, cuboids:17, done:false },
+      { id:38, cls:'two-wheels', first:17, last:29, cuboids:13, done:false },
+      { id:39, cls:'two-wheels', first:18, last:26, cuboids:9, done:false },
+      { id:40, cls:'two-wheels', first:21, last:21, cuboids:1, done:false },
+      { id:41, cls:'two-wheels', first:22, last:29, cuboids:8, done:false },
+      { id:42, cls:'two-wheels', first:23, last:29, cuboids:7, done:false },
+      { id:43, cls:'vehicles', first:24, last:26, cuboids:3, done:false },
+      { id:44, cls:'two-wheels', first:25, last:29, cuboids:5, done:false },
+      { id:45, cls:'two-wheels', first:26, last:29, cuboids:4, done:false },
+      { id:46, cls:'two-wheels', first:26, last:28, cuboids:3, done:false },
+      { id:47, cls:'vehicles', first:28, last:29, cuboids:2, done:false },
+      { id:48, cls:'two-wheels', first:29, last:29, cuboids:1, done:false },
+    ],
+    clusters:[], notes:[], link:'', assignedAt:'', annoDoneAt:'',
+  },
+  {
+    no:2, batch:3, task:2901, job:3398, qc:'Huy', qcState:'',
+    source:null, frames:0, tracks:[], clusters:[], notes:[], link:'', assignedAt:'', annoDoneAt:'',
+  },
 ];
 
-// Bring older saved rows up to the current format
+// Bring saved or restored rows up to the current format
 function migrate(rows){
-  return rows.map(r => {
-    const out = { ...r };
-    if (!('qcState' in out)) {
-      out.qcState = out.state === 'qc_done' ? 'qc_done' : out.state === 'qc_progress' ? 'qc_progress' : '';
-    }
-    if (!['', 'qc_progress', 'qc_done'].includes(out.qcState)) out.qcState = '';
-    delete out.state;
-    delete out.rejects;
-    delete out.rework;
-    delete out.qcDoneAt;
-    out.notes      = Array.isArray(out.notes) ? out.notes : [];
-    out.assignedAt = out.assignedAt || '';
-    out.annoDoneAt = out.annoDoneAt || '';
-    out.link       = out.link || '';
-    return out;
-  });
+  return rows.map(r => ({
+    no: Number(r.no) || 0,
+    batch: r.batch ?? '',
+    task: r.task ?? '',
+    job: r.job ?? '',
+    qc: r.qc || null,
+    qcState: ['qc_progress', 'qc_done'].includes(r.qcState) ? r.qcState : '',
+    source: r.source || null,
+    frames: Number(r.frames) || 0,
+    tracks: Array.isArray(r.tracks) ? r.tracks.map(t => ({
+      id: Number(t.id),
+      cls: String(t.cls || ''),
+      first: t.first ?? null,
+      last: t.last ?? null,
+      cuboids: Number(t.cuboids) || 0,
+      done: !!t.done,
+    })) : [],
+    clusters: Array.isArray(r.clusters) ? r.clusters : [],
+    notes: Array.isArray(r.notes) ? r.notes : [],
+    link: r.link || '',
+    assignedAt: r.assignedAt || '',
+    annoDoneAt: r.annoDoneAt || '',
+  }));
 }
 
 function loadData(){
@@ -294,8 +430,9 @@ const ui = {
   query: '',
 };
 
-let openRowNo = null;   // job whose notes dialog is open
-let noteSeq = 0;        // id counter for notes
+let openRowNo = null;     // job whose dialog is open
+let noteSeq = 0;          // id counter for notes
+let pendingImport = null; // parsed file waiting in the New job dialog
 
 function syncNoteSeq(){
   noteSeq = DATA.reduce((m, r) =>
@@ -313,12 +450,15 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stageMeta = id => STAGES.find(s => s.id === id) || STAGES[0];
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
-const isNumeric = c => ['num', 'progress', 'issues'].includes(c.type);
-const NUM_FIELDS = ['frame', 'trackId', 'cuboid'];
+const isNumeric = c => ['num', 'progress', 'issues', 'auto'].includes(c.type);
 
-const pctOf = r => r.total ? Math.min(100, r.annotated / r.total * 100) : 0;
-const isAnnoComplete = r => r.total > 0 && r.annotated >= r.total;
-const openCount = r => (r.notes || []).filter(n => !n.done).length;
+// Track and cuboid numbers come from the tracks list
+const trackCount = r => (r.tracks || []).length;
+const doneCount  = r => (r.tracks || []).filter(t => t.done).length;
+const cuboidsOf  = r => (r.tracks || []).reduce((a, t) => a + Number(t.cuboids || 0), 0);
+const pctOf      = r => trackCount(r) ? doneCount(r) / trackCount(r) * 100 : 0;
+const isAnnoComplete = r => trackCount(r) > 0 && doneCount(r) === trackCount(r);
+const openCount  = r => (r.notes || []).filter(n => !n.done).length;
 const currentRow = () => DATA.find(r => r.no === openRowNo);
 
 // Local time as "YYYY-MM-DDTHH:mm"
@@ -334,12 +474,21 @@ function fmtDate(s){
   return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : '';
 }
 
-// Current stage, from the annotated count and the QC status
+// Ngày hoàn thành = the moment every track is ticked (100%). Cleared if it drops below.
+function refreshAnno(r){
+  if (isAnnoComplete(r)) {
+    if (!r.annoDoneAt) r.annoDoneAt = nowLocal();
+  } else {
+    r.annoDoneAt = '';
+  }
+}
+
+// Current stage, from the ticked tracks and the QC status
 function stageOf(r){
   if (r.qcState === 'qc_done') return 'qc_done';
   if (r.qcState === 'qc_progress') return 'qc_progress';
   if (isAnnoComplete(r)) return 'anno_done';
-  if (r.annotated > 0) return 'in_progress';
+  if (doneCount(r) > 0) return 'in_progress';
   return 'todo';
 }
 
@@ -351,6 +500,164 @@ function matches(r){
     if (!hay.includes(ui.query.toLowerCase())) return false;
   }
   return true;
+}
+
+/* =========================================================
+   READING THE QC FILE (.xlsx, sheet "Matrix")
+   Rows = track IDs, columns = frames.
+   A frame cell that is coloured (or has an issue symbol) = the track is there.
+   Cuboids for a track = last frame − first frame + 1
+   (gaps in the middle count, empty frames at the start and end do not).
+   ========================================================= */
+
+function loadXml(zip, path){
+  const f = zip.file(path);
+  if (!f) throw new Error(`Missing ${path} in this file.`);
+  return f.async('string').then(text => new DOMParser().parseFromString(text, 'application/xml'));
+}
+
+async function readSharedStrings(zip){
+  const f = zip.file('xl/sharedStrings.xml');
+  if (!f) return [];
+  const doc = new DOMParser().parseFromString(await f.async('string'), 'application/xml');
+  return [...doc.getElementsByTagName('si')].map(si =>
+    [...si.getElementsByTagName('t')].map(t => t.textContent).join(''));
+}
+
+function readCellValue(c, sst){
+  const t = c.getAttribute('t');
+  if (t === 'inlineStr') {
+    const text = [...c.getElementsByTagName('t')].map(x => x.textContent).join('').trim();
+    return text || null;
+  }
+  const vEl = c.getElementsByTagName('v')[0];
+  if (!vEl || vEl.textContent === '') return null;
+  if (t === 's')   return (sst[Number(vEl.textContent)] || '').trim() || null;
+  if (t === 'str') return vEl.textContent.trim();
+  if (t === 'b' || t === 'e') return vEl.textContent;
+  const n = Number(vEl.textContent);
+  return Number.isNaN(n) ? vEl.textContent : n;
+}
+
+// Returns Map(rowNumber -> Map(columnLetter -> { v, filled })) for the named sheet
+async function readSheet(zip, sheetName){
+  const wb = await loadXml(zip, 'xl/workbook.xml');
+  const rels = await loadXml(zip, 'xl/_rels/workbook.xml.rels');
+  const sheetEl = [...wb.getElementsByTagName('sheet')].find(s => s.getAttribute('name') === sheetName);
+  if (!sheetEl) return null;
+
+  const rid = sheetEl.getAttribute('r:id');
+  const rel = [...rels.getElementsByTagName('Relationship')].find(r => r.getAttribute('Id') === rid);
+  if (!rel) return null;
+  const target = rel.getAttribute('Target');
+  const path = target.startsWith('/') ? target.slice(1) : 'xl/' + target;
+
+  const sheet = await loadXml(zip, path);
+  const sst = await readSharedStrings(zip);
+
+  // Which cell styles have a solid fill (the coloured boxes)
+  let fillSolid = [], xfFill = [];
+  const sf = zip.file('xl/styles.xml');
+  if (sf) {
+    const styles = new DOMParser().parseFromString(await sf.async('string'), 'application/xml');
+    const fillsEl = styles.getElementsByTagName('fills')[0];
+    const xfsEl = styles.getElementsByTagName('cellXfs')[0];
+    fillSolid = fillsEl ? [...fillsEl.getElementsByTagName('fill')].map(f => {
+      const p = f.getElementsByTagName('patternFill')[0];
+      return !!p && p.getAttribute('patternType') === 'solid';
+    }) : [];
+    xfFill = xfsEl ? [...xfsEl.getElementsByTagName('xf')].map(x => Number(x.getAttribute('fillId') || 0)) : [];
+  }
+
+  const rows = new Map();
+  for (const c of sheet.getElementsByTagName('c')) {
+    const m = /^([A-Z]+)(\d+)$/.exec(c.getAttribute('r') || '');
+    if (!m) continue;
+    const col = m[1];
+    const row = Number(m[2]);
+    const s = Number(c.getAttribute('s') || 0);
+    const filled = !!fillSolid[xfFill[s]];
+    if (!rows.has(row)) rows.set(row, new Map());
+    rows.get(row).set(col, { v: readCellValue(c, sst), filled });
+  }
+  return rows;
+}
+
+async function parseQcFile(file){
+  if (typeof JSZip === 'undefined') {
+    throw new Error('The file reader did not load. Check your internet connection and reload.');
+  }
+  const zip = await JSZip.loadAsync(file);
+
+  const matrix = await readSheet(zip, 'Matrix');
+  if (!matrix) throw new Error('This file has no "Matrix" sheet.');
+
+  // The header row is the one where column A says "Track ID"
+  let headerRow = null;
+  for (const [row, cols] of matrix) {
+    const a = cols.get('A') && cols.get('A').v;
+    if (typeof a === 'string' && a.trim().toLowerCase() === 'track id') { headerRow = row; break; }
+  }
+  if (headerRow === null) throw new Error('Could not find the "Track ID" header row in Matrix.');
+
+  // Frame columns: numeric headers in the header row
+  const frameCols = [];
+  for (const [col, cell] of matrix.get(headerRow)) {
+    if (typeof cell.v === 'number' && Number.isInteger(cell.v)) frameCols.push([col, cell.v]);
+  }
+  if (!frameCols.length) throw new Error('No frame numbers found in the header row.');
+  const frameNums = frameCols.map(f => f[1]);
+  const frames = Math.max(...frameNums) - Math.min(...frameNums) + 1;
+
+  // One track per row below the header
+  const tracks = [];
+  const rowNumbers = [...matrix.keys()].filter(r => r > headerRow).sort((a, b) => a - b);
+  for (const row of rowNumbers) {
+    const cols = matrix.get(row);
+    const idCell = cols.get('A');
+    if (!idCell || typeof idCell.v !== 'number' || !Number.isInteger(idCell.v)) continue;
+
+    const clsCell = cols.get('B');
+    const present = frameCols
+      .filter(([col]) => {
+        const c = cols.get(col);
+        return c && (c.filled || c.v !== null);
+      })
+      .map(([, f]) => f)
+      .sort((a, b) => a - b);
+
+    const first = present.length ? present[0] : null;
+    const last  = present.length ? present[present.length - 1] : null;
+    tracks.push({
+      id: idCell.v,
+      cls: clsCell && clsCell.v ? String(clsCell.v) : '',
+      first,
+      last,
+      cuboids: present.length ? last - first + 1 : 0,
+      done: false,
+    });
+  }
+
+  // Batch and task are often in the file path on the Summary sheet
+  let batchHint = '', taskHint = '';
+  const summary = await readSheet(zip, 'Summary');
+  const pathCell = summary && summary.get(3) && summary.get(3).get('B');
+  const path = pathCell && typeof pathCell.v === 'string' ? pathCell.v : '';
+  const bm = /batch[_\s-]*(\d+)/i.exec(path);
+  const tm = /[\\/](\d{3,6})[\\/]annotations/i.exec(path);
+  if (bm) batchHint = bm[1];
+  if (tm) taskHint = tm[1];
+
+  return { frames, tracks, source: file.name, batchHint, taskHint };
+}
+
+// Re-reading a file keeps the ticks for track IDs that are still in it
+function mergeImport(r, parsed){
+  const old = new Map((r.tracks || []).map(t => [t.id, t]));
+  r.tracks = parsed.tracks.map(t => ({ ...t, done: !!(old.get(t.id) && old.get(t.id).done) }));
+  r.frames = parsed.frames;
+  r.source = { name: parsed.source, importedAt: nowLocal() };
+  refreshAnno(r);
 }
 
 /* =========================================================
@@ -397,17 +704,19 @@ function renderPills(){
 }
 
 function renderSummary(){
-  const total  = DATA.reduce((a, r) => a + Number(r.total || 0), 0);
-  const done   = DATA.reduce((a, r) => a + Number(r.annotated || 0), 0);
-  const issues = DATA.reduce((a, r) => a + openCount(r), 0);
-  const qcDone = DATA.filter(r => stageOf(r) === 'qc_done').length;
-  const pct    = total ? Math.round(done / total * 100) : 0;
+  const tracksAll  = DATA.reduce((a, r) => a + trackCount(r), 0);
+  const tracksDone = DATA.reduce((a, r) => a + doneCount(r), 0);
+  const cuboidsAll = DATA.reduce((a, r) => a + cuboidsOf(r), 0);
+  const issues     = DATA.reduce((a, r) => a + openCount(r), 0);
+  const qcDone     = DATA.filter(r => stageOf(r) === 'qc_done').length;
+  const pct        = tracksAll ? Math.round(tracksDone / tracksAll * 100) : 0;
 
   const stats = [
     [fmt(DATA.length), 'Jobs'],
-    [pct + '%', `Annotated (${fmt(done)} / ${fmt(total)})`],
+    [pct + '%', `Tracks done (${fmt(tracksDone)} / ${fmt(tracksAll)})`],
     [fmt(qcDone) + ' / ' + fmt(DATA.length), 'QC complete'],
     [fmt(issues), 'Open issues'],
+    [fmt(cuboidsAll), 'Cuboids'],
   ];
   $('#summary').innerHTML = stats.map(([n, l]) =>
     `<div class="card stat"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join('');
@@ -422,22 +731,24 @@ function cell(col, r){
       if (col.key === 'no') return fmt(r.no);
       return `<input class="cell-text" type="text" data-edit="${col.key}" ${id} ${aria} value="${esc(r[col.key])}">`;
 
-    case 'num':
-      return `<input class="cell-num" type="number" min="0" data-edit="${col.key}" ${id} ${aria} value="${esc(r[col.key])}">`;
-
     case 'qc':
       return `<select class="inline" data-edit="qc" ${id} aria-label="QC reviewer">
         <option value="">–</option>
         ${QC_REVIEWERS.map(n => `<option${n === r.qc ? ' selected' : ''}>${esc(n)}</option>`).join('')}
       </select>`;
 
+    case 'auto': {
+      if (!r.source) return `<span class="muted">–</span>`;
+      const v = col.key === 'frames' ? r.frames
+              : col.key === 'trackCount' ? trackCount(r)
+              : cuboidsOf(r);
+      return `<span>${fmt(v)}</span>`;
+    }
+
     case 'progress': {
       const pct = pctOf(r);
-      return `<span class="prog">` +
-               `<input class="cell-num" type="number" min="0" data-edit="annotated" ${id} aria-label="Annotated" value="${esc(r.annotated)}">` +
-               `<span class="sep">/</span>` +
-               `<input class="cell-num" type="number" min="0" data-edit="total" ${id} aria-label="Total" value="${esc(r.total)}">` +
-             `</span>` +
+      return `<button type="button" class="issue-btn" data-tracks="${r.no}" title="Open the track checklist">` +
+               `${fmt(doneCount(r))} / ${fmt(trackCount(r))}</button>` +
              `<span class="bar${pct >= 100 ? ' done' : ''}"><i style="width:${pct.toFixed(1)}%"></i></span>` +
              `<span class="pct">${pct.toFixed(0)}%</span>`;
     }
@@ -514,6 +825,110 @@ function render(){
   saveData();
 }
 
+/* ----- Track checklist dialog ----- */
+
+function setStatus(msg){
+  $('#clusterStatus').textContent = msg;
+}
+
+function renderTrackDialog(){
+  const r = currentRow();
+  if (!r) return;
+  const n = trackCount(r);
+  const d = doneCount(r);
+
+  $('#trkTitle').textContent = `Tracks · Job ${r.job || r.no}`;
+  $('#trkSub').textContent = n
+    ? `Done ${d} / ${n} · Left ${n - d} · ${cuboidsOf(r)} cuboids`
+    : 'No tracks yet. Attach the QC file.';
+
+  if (!n) {
+    $('#trkLeft').textContent = '';
+  } else if (d === n) {
+    $('#trkLeft').textContent = 'All tracks done ✓';
+  } else {
+    $('#trkLeft').textContent = 'Left: ' + r.tracks.filter(t => !t.done).map(t => t.id).join(', ');
+  }
+
+  $('#trkChips').innerHTML = r.tracks.map(t =>
+    `<label class="chip${t.done ? ' on' : ''}" title="${esc(t.cls)} · ${t.cuboids} cuboids">` +
+    `<input type="checkbox" data-track="${t.id}"${t.done ? ' checked' : ''}>${t.id}</label>`).join('') ||
+    `<span class="muted">No tracks in the file yet.</span>`;
+
+  const clusters = r.clusters || [];
+  $('#trkLog').innerHTML = clusters.length
+    ? clusters.map((c, i) =>
+        `<div class="logitem"><span><b>${i + 1}.</b> ${esc(fmtDate(c.at))} · ${c.ids.join(' ')}</span>` +
+        `<button type="button" class="btn danger small" data-cluster-del="${esc(c.id)}">×</button></div>`).join('')
+    : `<div class="muted">No clusters yet. Type IDs above and press Tick.</div>`;
+}
+
+function openTracks(no){
+  openRowNo = no;
+  $('#clusterInput').value = '';
+  setStatus('');
+  renderTrackDialog();
+  $('#trkDlg').showModal();
+}
+
+function applyCluster(){
+  const r = currentRow();
+  if (!r) return;
+  if (!r.tracks.length) { setStatus('Attach the QC file first.'); return; }
+
+  const input = $('#clusterInput');
+  const nums = [...new Set(input.value.split(/[\s,;]+/).filter(t => /^\d+$/.test(t)).map(Number))];
+  if (!nums.length) { setStatus('Type track IDs separated by spaces, e.g. 65 48 32 47 2 1'); return; }
+
+  const byId = new Map(r.tracks.map(t => [t.id, t]));
+  const found = [], missing = [];
+  let newly = 0;
+
+  nums.forEach(n => {
+    const t = byId.get(n);
+    if (!t) { missing.push(n); return; }
+    found.push(n);
+    if (!t.done) { t.done = true; newly++; }
+  });
+
+  if (found.length) {
+    r.clusters = r.clusters || [];
+    r.clusters.push({
+      id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6),
+      ids: found,
+      at: nowLocal(),
+    });
+  }
+  refreshAnno(r);
+  input.value = '';
+
+  let msg = `Ticked ${newly}`;
+  if (found.length > newly) msg += `, ${found.length - newly} were already done`;
+  if (missing.length) msg += `. Not in the file: ${missing.join(', ')}`;
+  setStatus(msg);
+
+  render();
+  renderTrackDialog();
+}
+
+function deleteCluster(cid){
+  const r = currentRow();
+  if (!r) return;
+  const entry = (r.clusters || []).find(c => c.id === cid);
+  if (!entry) return;
+  if (!confirm(`Remove cluster "${entry.ids.join(' ')}" from the log? Those IDs are unticked unless another cluster has them.`)) return;
+
+  const others = new Set((r.clusters || []).filter(c => c.id !== cid).flatMap(c => c.ids));
+  const byId = new Map(r.tracks.map(t => [t.id, t]));
+  entry.ids.forEach(id => {
+    if (!others.has(id) && byId.has(id)) byId.get(id).done = false;
+  });
+  r.clusters = r.clusters.filter(c => c.id !== cid);
+  refreshAnno(r);
+  render();
+  renderTrackDialog();
+}
+
 /* ----- Notes dialog ----- */
 
 function renderNotes(){
@@ -561,8 +976,9 @@ function addNote(){
 /* ----- Report ----- */
 
 function reportLine(r){
-  const pct = pctOf(r);
-  const annoText = isAnnoComplete(r) ? 'Anno xong' : `Anno ${pct.toFixed(0)}%`;
+  const n = trackCount(r);
+  const d = doneCount(r);
+  const annoText = isAnnoComplete(r) ? 'Anno xong' : `Anno ${pctOf(r).toFixed(0)}% (${d}/${n})`;
   const qcText = {
     qc_done: 'QC xong',
     qc_progress: 'QC đang làm',
@@ -571,8 +987,8 @@ function reportLine(r){
 
   const parts = [
     `Task ${r.task || '–'} - Job ${r.job || '–'}`,
-    `TrackID ${r.trackId ?? 0}`,
-    `Cuboid ${r.cuboid ?? 0}`,
+    `TrackID ${n}`,
+    `Cuboid ${cuboidsOf(r)}`,
     annoText,
     qcText,
     `Giao: ${fmtDate(r.assignedAt) || '–'}`,
@@ -596,8 +1012,9 @@ function buildReport(){
   const blocks = batches.map(b =>
     [`Batch ${b} - ${CONFIG.reportName}`, ...groups.get(b).map(reportLine)].join('\n'));
 
-  const sum = key => DATA.reduce((a, r) => a + Number(r[key] || 0), 0);
-  const totals = `Tổng: ${DATA.length} job · TrackID ${sum('trackId')} · Cuboid ${sum('cuboid')}`;
+  const tracks  = DATA.reduce((a, r) => a + trackCount(r), 0);
+  const cuboids = DATA.reduce((a, r) => a + cuboidsOf(r), 0);
+  const totals = `Tổng: ${DATA.length} job · TrackID ${tracks} · Cuboid ${cuboids}`;
 
   return blocks.join('\n\n') + '\n\n' + totals;
 }
@@ -625,15 +1042,42 @@ async function copyReport(){
    DATA ACTIONS
    ========================================================= */
 
-function addJob(){
+function setQcStatus(row, value){
+  row.qcState = value;
+}
+
+function openNewJob(){
+  pendingImport = null;
+  $('#newFile').value = '';
+  $('#newBatch').value = '';
+  $('#newTask').value = '';
+  $('#newJob').value = '';
+  $('#newQc').value = '';
+  $('#newPreview').textContent = 'Choose the file to read tracks, frames and cuboids.';
+  $('#createJob').disabled = true;
+  $('#newDlg').showModal();
+}
+
+function createJob(){
+  if (!pendingImport) return;
   const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
   DATA.push({
-    no, batch:'', task:'', job:'', qc:null,
-    frame:0, trackId:0, cuboid:0, annotated:0, total:0,
-    qcState:'', link:'', notes:[],
+    no,
+    batch: $('#newBatch').value.trim(),
+    task: $('#newTask').value.trim(),
+    job: $('#newJob').value.trim(),
+    qc: $('#newQc').value || null,
+    qcState: '',
+    source: { name: pendingImport.source, importedAt: nowLocal() },
+    frames: pendingImport.frames,
+    tracks: pendingImport.tracks.map(t => ({ ...t })),
+    clusters: [],
+    notes: [],
+    link: '',
     assignedAt: nowLocal(),   // Ngày giao = the moment the job is added
-    annoDoneAt: '',           // Ngày hoàn thành = the moment it reaches 100%
+    annoDoneAt: '',           // Ngày hoàn thành = the moment every track is ticked
   });
+  pendingImport = null;
 
   // Clear filters and search so the new row is visible
   ui.states.clear();
@@ -641,11 +1085,8 @@ function addJob(){
   ui.query = '';
   $('#q').value = '';
 
+  $('#newDlg').close();
   render();
-
-  const first = document.querySelector(`[data-edit="batch"][data-id="${no}"]`) ||
-                document.querySelector(`[data-edit][data-id="${no}"]`);
-  if (first) first.focus();
 }
 
 function deleteJob(no){
@@ -658,7 +1099,7 @@ function deleteJob(no){
 }
 
 function backupData(){
-  const payload = { version: 1, exportedAt: new Date().toISOString(), data: DATA };
+  const payload = { version: 2, exportedAt: new Date().toISOString(), data: DATA };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
   a.download = `job-report-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -672,12 +1113,13 @@ function backupData(){
 
 // Table and page buttons
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes]');
+  const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes],[data-tracks]');
   if (!b) return;
 
+  if (b.dataset.tracks !== undefined) { openTracks(Number(b.dataset.tracks)); return; }
   if (b.dataset.notes !== undefined)  { openNotes(Number(b.dataset.notes)); return; }
   if (b.dataset.delete !== undefined) { deleteJob(Number(b.dataset.delete)); return; }
-  if (b.dataset.action === 'add-job') { addJob(); return; }
+  if (b.dataset.action === 'add-job') { openNewJob(); return; }
 
   if (b.dataset.toggle) {
     const set = ui[b.dataset.toggle];
@@ -714,27 +1156,60 @@ document.addEventListener('change', e => {
   const field = el.dataset.edit;
   const value = el.value;
 
-  if (field === 'qcState') {
-    row.qcState = value;
-  } else if (field === 'qc') {
-    row.qc = value || null;
-  } else if (field === 'annotated' || field === 'total') {
-    // Stamp Ngày hoàn thành when annotation first reaches 100%; clear it if it drops below
-    const wasComplete = isAnnoComplete(row);
-    row[field] = Math.max(0, Number(value) || 0);
-    const nowComplete = isAnnoComplete(row);
-    if (!wasComplete && nowComplete) row.annoDoneAt = nowLocal();
-    if (wasComplete && !nowComplete) row.annoDoneAt = '';
-  } else if (NUM_FIELDS.includes(field)) {
-    row[field] = Math.max(0, Number(value) || 0);
-  } else {
-    row[field] = value.trim();
-  }
+  if (field === 'qcState')   setQcStatus(row, value);
+  else if (field === 'qc')   row.qc = value || null;
+  else if (field === 'link') row.link = value.trim();
+  else                       row[field] = value.trim();
 
   render();
 });
 
-// Editing notes in the dialog
+// Track checklist: ticking a box, cluster log, attach file
+const trkDlg = $('#trkDlg');
+
+trkDlg.addEventListener('change', e => {
+  const cb = e.target.closest('input[data-track]');
+  const r = currentRow();
+  if (!cb || !r) return;
+  const t = r.tracks.find(x => x.id === Number(cb.dataset.track));
+  if (!t) return;
+  t.done = cb.checked;
+  refreshAnno(r);
+  render();
+  renderTrackDialog();
+});
+
+trkDlg.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) { trkDlg.close(); return; }
+  const del = e.target.closest('[data-cluster-del]');
+  if (del) deleteCluster(del.dataset.clusterDel);
+});
+
+trkDlg.addEventListener('close', () => { openRowNo = null; render(); });
+
+$('#clusterApply').addEventListener('click', applyCluster);
+$('#clusterInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); applyCluster(); }
+});
+$('#attachBtn').addEventListener('click', () => $('#attachFile').click());
+
+$('#attachFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  const r = currentRow();
+  if (!file || !r) return;
+  try {
+    const parsed = await parseQcFile(file);
+    mergeImport(r, parsed);
+    render();
+    renderTrackDialog();
+    setStatus(`Read ${parsed.tracks.length} tracks, ${parsed.frames} frames, ${parsed.tracks.reduce((a, t) => a + t.cuboids, 0)} cuboids.`);
+  } catch (err) {
+    alert('Could not read this file: ' + err.message);
+  }
+});
+
+// Notes dialog
 const dlg = $('#notesDlg');
 
 dlg.addEventListener('change', e => {
@@ -764,6 +1239,35 @@ dlg.addEventListener('click', e => {
 
 $('#addNote').addEventListener('click', addNote);
 dlg.addEventListener('close', () => { openRowNo = null; render(); });
+
+// New job dialog
+const newDlg = $('#newDlg');
+$('#newQc').innerHTML = `<option value="">–</option>` +
+  QC_REVIEWERS.map(n => `<option>${esc(n)}</option>`).join('');
+
+$('#newFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('#newPreview').textContent = 'Reading file…';
+  $('#createJob').disabled = true;
+  try {
+    pendingImport = await parseQcFile(file);
+    const cuboids = pendingImport.tracks.reduce((a, t) => a + t.cuboids, 0);
+    $('#newPreview').textContent =
+      `${pendingImport.tracks.length} tracks · ${pendingImport.frames} frames · ${cuboids} cuboids`;
+    if (!$('#newBatch').value && pendingImport.batchHint) $('#newBatch').value = pendingImport.batchHint;
+    if (!$('#newTask').value && pendingImport.taskHint) $('#newTask').value = pendingImport.taskHint;
+    $('#createJob').disabled = false;
+  } catch (err) {
+    pendingImport = null;
+    $('#newPreview').textContent = 'Could not read this file: ' + err.message;
+  }
+});
+
+$('#createJob').addEventListener('click', createJob);
+newDlg.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) newDlg.close();
+});
 
 // Report dialog
 const reportDlg = $('#reportDlg');
