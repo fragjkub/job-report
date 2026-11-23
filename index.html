@@ -125,14 +125,13 @@
   .xm-btn:disabled{opacity:.45;cursor:default}
 
   dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(580px,92vw);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.2)}
-  dialog.wide{width:min(740px,94vw)}
-  dialog.xl{width:min(1260px,96vw)}
+  dialog.xl{width:min(1280px,96vw)}
   dialog::backdrop{background:rgba(16,24,40,.35)}
-  .dlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .dlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
   .dlg-head h2{font-size:16px;font-weight:600;margin:0}
-  .dlg-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px;max-height:65vh;overflow:auto}
-  dialog.xl .dlg-body{max-height:74vh;overflow:hidden}
-  .dlg-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .dlg-body{padding:12px 18px;display:flex;flex-direction:column;gap:10px;max-height:65vh;overflow:auto}
+  dialog.xl .dlg-body{max-height:78vh;overflow:hidden}
+  .dlg-foot{padding:10px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
   .muted{color:var(--muted)}
 
   .note{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
@@ -142,29 +141,33 @@
   .note-meta .at{margin-right:auto}
 
   .field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
-  .field input,.field select,.field-input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--ink);background:#fff}
+  .field input,.field select,.field-input{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;color:var(--ink);background:#fff}
   .field-input{flex:1;min-width:220px}
   .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 
-  .left{font-size:13px;color:var(--muted);word-break:break-word}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
-  .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;cursor:pointer;font-variant-numeric:tabular-nums;user-select:none}
-  .chip input{margin:0}
-  .chip.on{background:#E2F4EA;border-color:#9ED5B5;color:#1E7F4F}
-  .section-title{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
-  .loglist{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto}
-  .logitem{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff}
-
   #reportText{width:100%;min-height:340px;border:1px solid var(--line);border-radius:8px;padding:12px;font:13px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--ink);resize:vertical;background:#FBFCFD}
 
-  /* Matrix preview modal */
+  /* Matrix modal + cluster bar + v tick column */
+  .mx-cluster-bar{display:flex;flex-direction:column;gap:6px}
+  .mx-left{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mx-log{display:flex;flex-wrap:wrap;gap:6px;max-height:76px;overflow:auto}
+  .mx-log-tag{
+    display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-variant-numeric:tabular-nums;
+    border:1px solid var(--line);border-radius:6px;padding:2px 6px 2px 8px;background:var(--head);color:var(--ink);
+  }
+  .mx-log-del{
+    border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;
+    padding:0 2px;border-radius:3px;
+  }
+  .mx-log-del:hover{color:var(--danger);background:#FEF3F2}
+
   .mx-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
   .mx-banner{
     background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;border-radius:8px;
-    padding:7px 10px;font-size:12.5px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    padding:6px 10px;font-size:12.5px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
   }
   .mx-wrap{
-    flex:1;min-height:240px;max-height:58vh;overflow:auto;
+    flex:1;min-height:240px;max-height:56vh;overflow:auto;
     border:1px solid var(--line);border-radius:8px;background:#fff;
   }
   table.mx{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
@@ -175,20 +178,30 @@
   table.mx thead th{
     position:sticky;top:0;z-index:3;background:var(--head);color:var(--muted);font-weight:600;
   }
-  table.mx tbody tr:hover td.mx-meta{background:var(--hover)}
-  table.mx tbody tr.mx-done td.mx-meta{background:#F0FAF4}
-  table.mx tbody tr.mx-done td.mx-cell{opacity:.65}
+  table.mx tbody tr.mx-clickable{cursor:pointer;user-select:none}
+  table.mx tbody tr.mx-clickable:hover td.mx-meta,
+  table.mx tbody tr.mx-clickable:hover td.mx-v{background:#EEF3FE}
+  table.mx tbody tr.mx-clickable:hover td.mx-cell{box-shadow:inset 0 1px 0 rgba(47,91,234,.45), inset 0 -1px 0 rgba(47,91,234,.45)}
 
-  table.mx .sticky-0{position:sticky;left:0;z-index:2;width:44px;min-width:44px;max-width:44px;background:#fff}
-  table.mx .sticky-1{position:sticky;left:44px;z-index:2;width:64px;min-width:64px;max-width:64px;background:#fff;font-weight:600}
-  table.mx .sticky-2{
-    position:sticky;left:108px;z-index:2;width:112px;min-width:112px;max-width:112px;
+  table.mx tbody tr.mx-done td.mx-meta{background:#F0FAF4}
+  table.mx tbody tr.mx-done td.mx-v{background:#F0FAF4}
+  table.mx tbody tr.mx-done td.mx-cell{opacity:.72}
+
+  table.mx .sticky-0{position:sticky;left:0;z-index:2;width:62px;min-width:62px;max-width:62px;background:#fff;font-weight:600}
+  table.mx .sticky-1{
+    position:sticky;left:62px;z-index:2;width:112px;min-width:112px;max-width:112px;
     background:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;
     box-shadow:2px 0 0 rgba(220,226,234,.9);
   }
+  table.mx .sticky-v{
+    position:sticky;right:0;z-index:2;width:36px;min-width:36px;max-width:36px;
+    background:#fff;border-left:1px solid var(--line);border-right:0;
+    box-shadow:-2px 0 0 rgba(220,226,234,.65);
+    font-size:14px;font-weight:500;color:var(--ink);
+  }
   table.mx thead .sticky-0,
   table.mx thead .sticky-1,
-  table.mx thead .sticky-2{z-index:5;background:var(--head)}
+  table.mx thead .sticky-v{z-index:5;background:var(--head);font-size:12px;color:var(--muted);font-weight:600}
 
   table.mx td.mx-cell{min-width:28px;height:25px;padding:2px 4px;font-weight:600;font-size:11.5px}
   table.mx td.mx-cell.mx-present{background:#DCE8FF;color:#1D4ED8}
@@ -252,49 +265,29 @@
   </div>
 </dialog>
 
-<!-- Track checklist dialog (cluster ticking) -->
-<dialog id="trkDlg" class="wide" aria-labelledby="trkTitle">
-  <div class="dlg-head">
-    <div>
-      <h2 id="trkTitle"></h2>
-      <div class="sub" id="trkSub"></div>
-    </div>
-    <button type="button" class="btn small" data-close>Close</button>
-  </div>
-  <div class="dlg-body">
-    <div class="row">
-      <input id="clusterInput" class="field-input" placeholder="Cluster, e.g. 65 48 32 47 2 1" autocomplete="off">
-      <button id="clusterApply" class="btn primary" type="button">Tick</button>
-    </div>
-    <div class="sub" id="clusterStatus"></div>
-    <div class="left" id="trkLeft"></div>
-    <div class="chips" id="trkChips"></div>
-    <div>
-      <div class="section-title">Cluster log (in the order you handled them)</div>
-      <div class="loglist" id="trkLog"></div>
-    </div>
-  </div>
-  <div class="dlg-foot">
-    <div class="row">
-      <button class="btn" id="previewMatrixBtn" type="button">Preview Matrix</button>
-      <button class="btn" id="openExcelBtn" type="button">Download .xlsx</button>
-      <button class="btn" id="attachBtn" type="button">Update QC file</button>
-    </div>
-    <span class="sub" id="excelMeta">Re-reading the file keeps the ticks for IDs that are still in it.</span>
-  </div>
-</dialog>
-
-<!-- In-browser Excel Matrix preview modal -->
+<!-- Unified Excel Matrix & Track Ticking modal -->
 <dialog id="matrixDlg" class="xl" aria-labelledby="mxTitle">
   <div class="dlg-head">
     <div>
-      <h2 id="mxTitle">Matrix preview</h2>
+      <h2 id="mxTitle">Matrix</h2>
       <div class="sub" id="mxSub"></div>
     </div>
     <button type="button" class="btn small" data-close>Close</button>
   </div>
   <div class="dlg-body">
     <div id="mxBanner" class="mx-banner" hidden></div>
+
+    <!-- Cluster quick-tick + compact cluster numbers log -->
+    <div class="mx-cluster-bar" id="mxClusterSection">
+      <div class="row">
+        <input id="clusterInput" class="field-input" placeholder="Cluster IDs, e.g. 65 48 32 47 2 1" autocomplete="off">
+        <button id="clusterApply" class="btn primary small" type="button" style="padding:6px 14px;font-size:13px">Tick</button>
+        <span class="sub" id="clusterStatus"></span>
+      </div>
+      <div class="mx-left" id="mxLeft"></div>
+      <div class="mx-log" id="mxLog"></div>
+    </div>
+
     <div class="mx-bar">
       <div class="row" id="mxSheets"></div>
       <div class="row" id="mxControls">
@@ -302,6 +295,7 @@
         <div class="row" id="mxFilterPills"></div>
       </div>
     </div>
+
     <div class="mx-wrap" id="mxWrap"></div>
   </div>
   <div class="dlg-foot">
@@ -362,7 +356,7 @@
 <div id="linkPopover" class="popover" hidden></div>
 <div id="excelMenu" class="popover" hidden></div>
 
-<!-- JSZip reads the .xlsx file in the browser -->
+<!-- JSZip reads and writes the .xlsx file in the browser -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
@@ -583,15 +577,14 @@ const ui = {
   query: '',
 };
 
-let openRowNo = null;         // job open in track/notes dialog
+let openRowNo = null;         // job open in Notes dialog
 let attachTargetRowNo = null; // job receiving an updated .xlsx file
 let noteSeq = 0;
 let pendingImport = null;
 
-// Matrix modal state (independent so it can open on top of Track dialog)
 const mx = {
   rowNo: null,
-  sheets: [],        // [{ name, rows }]
+  sheets: [],        // [{ name, rows, fallback }]
   activeSheet: '',
   fromFile: false,
   query: '',
@@ -689,15 +682,24 @@ function positionPopover(pop, anchor){
   pop.style.left = `${Math.round(left)}px`;
 }
 
-// Convert Excel column letters (A, B, ..., AA) to 1-based number
 function colToNum(col){
   let n = 0;
   for (let i = 0; i < col.length; i++) n = n * 26 + (col.charCodeAt(i) - 64);
   return n;
 }
 
+function numToCol(n){
+  let s = '';
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    s = String.fromCharCode(65 + rem) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
 /* =========================================================
-   READING THE QC FILE (.xlsx) WITH CELL COLORS & STYLES
+   READING & WRITING THE QC FILE (.xlsx)
    ========================================================= */
 
 const OFFICE_THEME = [
@@ -849,6 +851,30 @@ async function readSheetFromContext(zip, ctx, sheetName){
   return rows;
 }
 
+// Find the "v" tick column right after the last frame column without clobbering other headers
+function findTickCol(headerColsMap, maxFrameColNum){
+  const candidates = [...headerColsMap.entries()]
+    .map(([col, cell]) => ({ col, num: colToNum(col), val: cell.v }))
+    .filter(x => x.num > maxFrameColNum)
+    .sort((a, b) => a.num - b.num);
+
+  // Reuse an explicit v / done / tick column if present
+  const existing = candidates.find(x =>
+    typeof x.val === 'string' && /^(v|✓|done|tick)$/i.test(x.val.trim())
+  );
+  if (existing) return { col: existing.col, num: existing.num, hasHeader: true };
+
+  // Otherwise pick the first column after the last frame with an empty header
+  let n = maxFrameColNum + 1;
+  while (true) {
+    const col = numToCol(n);
+    const cell = headerColsMap.get(col);
+    const empty = !cell || cell.v === null || String(cell.v).trim() === '';
+    if (empty) return { col, num: n, hasHeader: false };
+    n++;
+  }
+}
+
 async function parseQcFile(file){
   if (typeof JSZip === 'undefined') {
     throw new Error('The file reader did not load. Check your internet connection and reload.');
@@ -866,13 +892,17 @@ async function parseQcFile(file){
   }
   if (headerRow === null) throw new Error('Could not find the "Track ID" header row in Matrix.');
 
+  const headerCols = matrix.get(headerRow);
   const frameCols = [];
-  for (const [col, cell] of matrix.get(headerRow)) {
+  for (const [col, cell] of headerCols) {
     if (typeof cell.v === 'number' && Number.isInteger(cell.v)) frameCols.push([col, cell.v]);
   }
   if (!frameCols.length) throw new Error('No frame numbers found in the header row.');
+
   const frameNums = frameCols.map(f => f[1]);
   const frames = Math.max(...frameNums) - Math.min(...frameNums) + 1;
+  const maxFrameColNum = Math.max(...frameCols.map(([col]) => colToNum(col)));
+  const tickCol = findTickCol(headerCols, maxFrameColNum);
 
   const tracks = [];
   const rowNumbers = [...matrix.keys()].filter(r => r > headerRow).sort((a, b) => a - b);
@@ -890,6 +920,9 @@ async function parseQcFile(file){
       .map(([, f]) => f)
       .sort((a, b) => a - b);
 
+    const vCell = cols.get(tickCol.col);
+    const isTicked = !!(vCell && typeof vCell.v === 'string' && /^(v|✓)$/i.test(vCell.v.trim()));
+
     const first = present.length ? present[0] : null;
     const last  = present.length ? present[present.length - 1] : null;
     tracks.push({
@@ -898,7 +931,7 @@ async function parseQcFile(file){
       first,
       last,
       cuboids: present.length ? last - first + 1 : 0,
-      done: false,
+      done: isTicked,
     });
   }
 
@@ -914,9 +947,136 @@ async function parseQcFile(file){
   return { frames, tracks, source: file.name, batchHint, taskHint };
 }
 
+// Write/clear "v" ticks directly inside the Matrix worksheet XML
+function setInlineCell(doc, ns, rowEl, rowNum, colLetter, colNum, text){
+  const ref = colLetter + rowNum;
+  const cells = [...rowEl.children].filter(el => el.localName === 'c');
+  let cEl = cells.find(el => el.getAttribute('r') === ref) || null;
+
+  if (!text) {
+    if (!cEl) return;
+    cEl.removeAttribute('t');
+    while (cEl.firstChild) cEl.removeChild(cEl.firstChild);
+    if (!cEl.getAttribute('s')) rowEl.removeChild(cEl);
+    return;
+  }
+
+  if (!cEl) {
+    cEl = doc.createElementNS(ns, 'c');
+    cEl.setAttribute('r', ref);
+    const after = cells.find(el => {
+      const m = /^([A-Z]+)\d+$/.exec(el.getAttribute('r') || '');
+      return m && colToNum(m[1]) > colNum;
+    });
+    if (after) rowEl.insertBefore(cEl, after);
+    else rowEl.appendChild(cEl);
+  } else {
+    while (cEl.firstChild) cEl.removeChild(cEl.firstChild);
+  }
+
+  cEl.setAttribute('t', 'inlineStr');
+  const isEl = doc.createElementNS(ns, 'is');
+  const tEl = doc.createElementNS(ns, 't');
+  tEl.textContent = text;
+  isEl.appendChild(tEl);
+  cEl.appendChild(isEl);
+
+  // Keep row spans attribute valid if present
+  const spans = rowEl.getAttribute('spans');
+  const sm = /^(\d+):(\d+)$/.exec(spans || '');
+  if (sm && Number(sm[2]) < colNum) {
+    rowEl.setAttribute('spans', `${sm[1]}:${colNum}`);
+  }
+}
+
+async function syncTicksIntoWorkbook(file, r){
+  if (typeof JSZip === 'undefined') return file;
+  const zip = await JSZip.loadAsync(file);
+  const ctx = await readWorkbookContext(zip);
+  const matInfo = ctx.sheetList.find(s => s.name === 'Matrix');
+  if (!matInfo) return file;
+
+  const sheetDoc = await loadXml(zip, matInfo.path);
+  const ns = sheetDoc.documentElement.namespaceURI || 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const rowEls = [...sheetDoc.getElementsByTagName('row')];
+
+  // Locate header row ("Track ID" in col A)
+  let headerRowEl = null;
+  let headerRowNum = null;
+  const headerColsMap = new Map();
+
+  for (const rowEl of rowEls) {
+    const rn = Number(rowEl.getAttribute('r') || 0);
+    const cells = [...rowEl.children].filter(el => el.localName === 'c');
+    const aCell = cells.find(el => el.getAttribute('r') === 'A' + rn);
+    const aVal = aCell ? readCellValue(aCell, ctx.sst) : null;
+    if (typeof aVal === 'string' && aVal.trim().toLowerCase() === 'track id') {
+      headerRowEl = rowEl;
+      headerRowNum = rn;
+      for (const c of cells) {
+        const m = /^([A-Z]+)\d+$/.exec(c.getAttribute('r') || '');
+        if (m) headerColsMap.set(m[1], { v: readCellValue(c, ctx.sst) });
+      }
+      break;
+    }
+  }
+  if (!headerRowEl) return file;
+
+  const frameColNums = [...headerColsMap.entries()]
+    .filter(([, cell]) => typeof cell.v === 'number' && Number.isInteger(cell.v))
+    .map(([col]) => colToNum(col));
+  if (!frameColNums.length) return file;
+
+  const maxFrameColNum = Math.max(...frameColNums);
+  const tickCol = findTickCol(headerColsMap, maxFrameColNum);
+  const doneById = new Map((r.tracks || []).map(t => [t.id, !!t.done]));
+
+  // Write "v" header only if the tick column header was blank
+  if (!tickCol.hasHeader) {
+    setInlineCell(sheetDoc, ns, headerRowEl, headerRowNum, tickCol.col, tickCol.num, 'v');
+  }
+
+  // Sync each track row's "v" cell
+  for (const rowEl of rowEls) {
+    const rn = Number(rowEl.getAttribute('r') || 0);
+    if (rn <= headerRowNum) continue;
+    const cells = [...rowEl.children].filter(el => el.localName === 'c');
+    const aCell = cells.find(el => el.getAttribute('r') === 'A' + rn);
+    const idVal = aCell ? readCellValue(aCell, ctx.sst) : null;
+    if (typeof idVal !== 'number' || !Number.isInteger(idVal)) continue;
+    if (!doneById.has(idVal)) continue;
+
+    setInlineCell(sheetDoc, ns, rowEl, rn, tickCol.col, tickCol.num, doneById.get(idVal) ? 'v' : '');
+  }
+
+  // Expand <dimension ref="..."/> if tickCol extends past the original used range
+  const dimEl = sheetDoc.getElementsByTagName('dimension')[0];
+  if (dimEl) {
+    const dm = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/.exec(dimEl.getAttribute('ref') || '');
+    if (dm && tickCol.num > colToNum(dm[3])) {
+      dimEl.setAttribute('ref', `${dm[1]}${dm[2]}:${tickCol.col}${dm[4]}`);
+    }
+  }
+
+  let xmlOut = new XMLSerializer().serializeToString(sheetDoc);
+  if (!/^\s*<\?xml\b/.test(xmlOut)) {
+    xmlOut = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + xmlOut;
+  }
+  zip.file(matInfo.path, xmlOut);
+
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    compression: 'DEFLATE',
+  });
+}
+
 function mergeImport(r, parsed, fileKey){
   const old = new Map((r.tracks || []).map(t => [t.id, t]));
-  r.tracks = parsed.tracks.map(t => ({ ...t, done: !!(old.get(t.id) && old.get(t.id).done) }));
+  r.tracks = parsed.tracks.map(t => ({
+    ...t,
+    done: !!(t.done || (old.get(t.id) && old.get(t.id).done)),
+  }));
   r.frames = parsed.frames;
   r.source = { name: parsed.source, importedAt: nowLocal(), fileKey: fileKey || null };
   refreshAnno(r);
@@ -932,8 +1092,14 @@ async function downloadJobExcel(r){
     alert('Stored .xlsx file was not found in this browser. Click "Update .xlsx" to re-attach it.');
     return;
   }
+  let outBlob = file;
+  try {
+    outBlob = await syncTicksIntoWorkbook(file, r);
+  } catch (err) {
+    console.warn('Could not patch v ticks into workbook, exporting original file:', err);
+  }
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(file);
+  a.href = URL.createObjectURL(outBlob);
   a.download = r.source.name || `job-${r.job || r.no}.xlsx`;
   a.click();
   URL.revokeObjectURL(a.href);
@@ -946,10 +1112,14 @@ function triggerExcelUpdate(rowNo){
 }
 
 /* =========================================================
-   IN-BROWSER EXCEL MATRIX PREVIEW MODAL
+   UNIFIED EXCEL MATRIX & TRACK TICKING MODAL
    ========================================================= */
 
 const matrixDlg = $('#matrixDlg');
+
+function setStatus(msg){
+  $('#clusterStatus').textContent = msg;
+}
 
 async function openMatrixPreview(rowNo){
   const r = rowByNo(rowNo);
@@ -964,6 +1134,8 @@ async function openMatrixPreview(rowNo){
   mx.query = '';
   mx.filter = 'all';
   $('#mxSearch').value = '';
+  $('#clusterInput').value = '';
+  setStatus('');
 
   $('#mxTitle').textContent = `Matrix · Job ${r.job || r.no}`;
   $('#mxSub').textContent = 'Loading…';
@@ -971,7 +1143,6 @@ async function openMatrixPreview(rowNo){
   $('#mxWrap').innerHTML = `<div class="muted" style="padding:24px;text-align:center">Reading workbook…</div>`;
   if (!matrixDlg.open) matrixDlg.showModal();
 
-  // Try loading the stored .xlsx binary from IndexedDB first
   const storedFile = r.source && r.source.fileKey ? await excelStore.get(r.source.fileKey) : null;
   if (storedFile && typeof JSZip !== 'undefined') {
     try {
@@ -989,14 +1160,13 @@ async function openMatrixPreview(rowNo){
     }
   }
 
-  // Fallback: synthesize Matrix from saved r.tracks if no stored .xlsx binary
   if (!mx.sheets.length && r.tracks && r.tracks.length) {
     mx.sheets = [{ name: 'Matrix', rows: null, fallback: true }];
     mx.activeSheet = 'Matrix';
     mx.fromFile = false;
   }
 
-  renderMatrixModal();
+  renderMatrixModal(false);
 }
 
 function isMatrixSheet(sheet){
@@ -1010,42 +1180,64 @@ function isMatrixSheet(sheet){
   return false;
 }
 
-function renderMatrixModal(){
+function renderMatrixModal(preserveScroll = true){
   const r = rowByNo(mx.rowNo);
   if (!r) return;
 
+  const wrap = $('#mxWrap');
+  const prevTop = preserveScroll ? wrap.scrollTop : 0;
+  const prevLeft = preserveScroll ? wrap.scrollLeft : 0;
+
+  const n = trackCount(r);
+  const d = doneCount(r);
   const hasStoredFile = !!(r.source && r.source.fileKey);
+
   $('#mxDownloadBtn').disabled = !hasStoredFile;
   $('#mxDownloadBtn').title = hasStoredFile
-    ? `Download ${r.source.name}`
+    ? `Download ${r.source.name} with synced v ticks`
     : 'Attach/update the .xlsx file once in this browser to enable download';
 
-  $('#mxTitle').textContent = `Excel Preview · Job ${r.job || r.no}`;
+  $('#mxTitle').textContent = `Matrix · Job ${r.job || r.no}`;
   $('#mxSub').textContent = `${r.source ? r.source.name : 'No file attached'} · ` +
-    `${doneCount(r)} / ${trackCount(r)} tracks done · ${r.frames} frames · ${cuboidsOf(r)} cuboids`;
+    `Done ${d} / ${n} · Left ${n - d} · ${r.frames} frames · ${cuboidsOf(r)} cuboids`;
 
   const banner = $('#mxBanner');
   if (!mx.fromFile && mx.sheets.length) {
     banner.hidden = false;
     banner.innerHTML =
-      `<span>Showing saved track spans (original <b>.xlsx</b> is not stored in this browser yet — attach it once to see original Excel colors, symbols, and all sheets).</span>` +
+      `<span>Showing saved track spans (attach the <b>.xlsx</b> once in this browser to see original Excel colors, symbols, and export synced v ticks).</span>` +
       `<button type="button" class="btn small" id="mxBannerAttach">Attach .xlsx</button>`;
   } else {
     banner.hidden = true;
     banner.innerHTML = '';
   }
 
-  // Sheet switcher tabs
+  const sheet = mx.sheets.find(s => s.name === mx.activeSheet);
+  const matrixMode = isMatrixSheet(sheet);
+  $('#mxClusterSection').style.display = (matrixMode && n > 0) ? 'flex' : 'none';
+
+  if (n > 0) {
+    const leftText = d === n
+      ? 'All tracks done ✓'
+      : 'Left: ' + r.tracks.filter(t => !t.done).map(t => t.id).join(', ');
+    $('#mxLeft').textContent = leftText;
+    $('#mxLeft').title = leftText;
+
+    const clusters = r.clusters || [];
+    $('#mxLog').innerHTML = clusters.map(c =>
+      `<span class="mx-log-tag">${c.ids.join(' ')}` +
+      `<button type="button" class="mx-log-del" data-cluster-del="${esc(c.id)}" title="Remove cluster">×</button></span>`
+    ).join('');
+  }
+
   $('#mxSheets').innerHTML = mx.sheets.map(s =>
     `<button type="button" class="pill small${s.name === mx.activeSheet ? ' on' : ''}" data-mx-sheet="${esc(s.name)}">${esc(s.name)}</button>`
   ).join('');
 
-  const sheet = mx.sheets.find(s => s.name === mx.activeSheet);
-  const matrixMode = isMatrixSheet(sheet);
   $('#mxControls').style.display = matrixMode ? 'flex' : 'none';
 
   if (!sheet) {
-    $('#mxWrap').innerHTML = `<div class="muted" style="padding:32px;text-align:center">No QC file attached to this job yet. Click “Update .xlsx” below to attach one.</div>`;
+    wrap.innerHTML = `<div class="muted" style="padding:32px;text-align:center">No QC file attached to this job yet. Click “Update .xlsx” below to attach one.</div>`;
     $('#mxFootInfo').textContent = '';
     return;
   }
@@ -1055,14 +1247,19 @@ function renderMatrixModal(){
   } else {
     renderGenericSheet(sheet);
   }
+
+  if (preserveScroll) {
+    wrap.scrollTop = prevTop;
+    wrap.scrollLeft = prevLeft;
+  }
 }
 
 function renderMatrixGrid(r, sheet){
   const byId = new Map((r.tracks || []).map(t => [t.id, t]));
   const q = mx.query.trim().toLowerCase();
 
-  let frameList = []; // [{ col, label }]
-  let dataRows = [];  // [{ id, cls, track, cells: [{ filled, bg, fg, bold, v }], hasSymbol }]
+  let frameList = [];
+  let dataRows = [];
 
   if (sheet.fallback) {
     const maxF = Math.max(0, (r.frames || 0) - 1, ...r.tracks.map(t => t.last ?? 0));
@@ -1131,18 +1328,17 @@ function renderMatrixGrid(r, sheet){
 
   const headHtml =
     `<tr>` +
-    `<th class="sticky-0" title="Tick track as done">✓</th>` +
-    `<th class="sticky-1">Track</th>` +
-    `<th class="sticky-2">Class</th>` +
+    `<th class="sticky-0">Track</th>` +
+    `<th class="sticky-1">Class</th>` +
     frameList.map(f => `<th>${esc(f.label)}</th>`).join('') +
+    `<th class="sticky-v" title="Click anywhere on a row to toggle v">v</th>` +
     `</tr>`;
 
   const bodyHtml = filtered.length
     ? filtered.map(dr => {
         const isDone = !!(dr.track && dr.track.done);
-        const cbHtml = dr.track
-          ? `<input type="checkbox" data-mx-track="${dr.id}"${isDone ? ' checked' : ''} aria-label="Mark track ${dr.id} done">`
-          : '–';
+        const clickable = dr.track ? ` data-mx-row="${dr.id}"` : '';
+        const rowClass = [dr.track ? 'mx-clickable' : '', isDone ? 'mx-done' : ''].filter(Boolean).join(' ');
 
         const frameTds = dr.cells.map((c, idx) => {
           const hasText = c.v !== null && String(c.v).trim() !== '';
@@ -1161,17 +1357,17 @@ function renderMatrixGrid(r, sheet){
           return `<td class="${classes.join(' ')}"${styles.length ? ` style="${styles.join(';')}"` : ''} title="${esc(tip)}">${hasText ? esc(c.v) : ''}</td>`;
         }).join('');
 
-        return `<tr class="${isDone ? 'mx-done' : ''}">` +
-          `<td class="mx-meta sticky-0">${cbHtml}</td>` +
-          `<td class="mx-meta sticky-1">${dr.id}</td>` +
-          `<td class="mx-meta sticky-2" title="${esc(dr.cls)}">${esc(dr.cls)}</td>` +
+        return `<tr class="${rowClass}"${clickable}>` +
+          `<td class="mx-meta sticky-0">${dr.id}</td>` +
+          `<td class="mx-meta sticky-1" title="${esc(dr.cls)}">${esc(dr.cls)}</td>` +
           frameTds +
+          `<td class="mx-v sticky-v">${isDone ? 'v' : ''}</td>` +
           `</tr>`;
       }).join('')
     : `<tr><td colspan="${frameList.length + 3}" class="empty">No tracks match this filter.</td></tr>`;
 
   $('#mxWrap').innerHTML = `<table class="mx"><thead>${headHtml}</thead><tbody>${bodyHtml}</tbody></table>`;
-  $('#mxFootInfo').textContent = `Showing ${filtered.length} of ${totalCount} tracks · Click ✓ to tick tracks live.`;
+  $('#mxFootInfo').textContent = `Showing ${filtered.length} of ${totalCount} tracks · Click anywhere on a row to tick/untick v.`;
 }
 
 function renderGenericSheet(sheet){
@@ -1208,45 +1404,112 @@ function renderGenericSheet(sheet){
   $('#mxFootInfo').textContent = `Sheet "${sheet.name}" · ${rowNums.length} rows × ${cols.length} columns`;
 }
 
+function applyCluster(){
+  const r = rowByNo(mx.rowNo);
+  if (!r) return;
+  if (!r.tracks.length) { setStatus('Attach the QC file first.'); return; }
+
+  const input = $('#clusterInput');
+  const nums = [...new Set(input.value.split(/[\s,;]+/).filter(t => /^\d+$/.test(t)).map(Number))];
+  if (!nums.length) { setStatus('Type track IDs separated by spaces, e.g. 65 48 32 47 2 1'); return; }
+
+  const byId = new Map(r.tracks.map(t => [t.id, t]));
+  const found = [], missing = [];
+  let newly = 0;
+
+  nums.forEach(n => {
+    const t = byId.get(n);
+    if (!t) { missing.push(n); return; }
+    found.push(n);
+    if (!t.done) { t.done = true; newly++; }
+  });
+
+  if (found.length) {
+    r.clusters = r.clusters || [];
+    r.clusters.push({
+      id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6),
+      ids: found,
+      at: nowLocal(),
+    });
+  }
+  refreshAnno(r);
+  input.value = '';
+
+  let msg = `Ticked ${newly}`;
+  if (found.length > newly) msg += `, ${found.length - newly} already done`;
+  if (missing.length) msg += ` · Not in file: ${missing.join(', ')}`;
+  setStatus(msg);
+
+  render();
+  renderMatrixModal(true);
+}
+
+function deleteCluster(cid){
+  const r = rowByNo(mx.rowNo);
+  if (!r) return;
+  const entry = (r.clusters || []).find(c => c.id === cid);
+  if (!entry) return;
+  if (!confirm(`Remove cluster "${entry.ids.join(' ')}"? Those IDs will be unticked unless another cluster has them.`)) return;
+
+  const others = new Set((r.clusters || []).filter(c => c.id !== cid).flatMap(c => c.ids));
+  const byId = new Map(r.tracks.map(t => [t.id, t]));
+  entry.ids.forEach(id => {
+    if (!others.has(id) && byId.has(id)) byId.get(id).done = false;
+  });
+  r.clusters = r.clusters.filter(c => c.id !== cid);
+  refreshAnno(r);
+  render();
+  renderMatrixModal(true);
+}
+
 matrixDlg.addEventListener('click', e => {
   if (e.target.closest('[data-close]')) { matrixDlg.close(); return; }
   if (e.target.closest('#mxBannerAttach')) { triggerExcelUpdate(mx.rowNo); return; }
 
+  const del = e.target.closest('[data-cluster-del]');
+  if (del) { deleteCluster(del.dataset.clusterDel); return; }
+
   const tab = e.target.closest('[data-mx-sheet]');
   if (tab) {
     mx.activeSheet = tab.dataset.mxSheet;
-    renderMatrixModal();
+    renderMatrixModal(false);
     return;
   }
 
   const flt = e.target.closest('[data-mx-filter]');
   if (flt) {
     mx.filter = flt.dataset.mxFilter;
-    renderMatrixModal();
+    renderMatrixModal(false);
+    return;
   }
-});
 
-matrixDlg.addEventListener('change', e => {
-  const cb = e.target.closest('input[data-mx-track]');
-  const r = rowByNo(mx.rowNo);
-  if (!cb || !r) return;
-  const t = r.tracks.find(x => x.id === Number(cb.dataset.mxTrack));
-  if (!t) return;
-  t.done = cb.checked;
-  refreshAnno(r);
-  render();
-  if (trkDlg.open && openRowNo === r.no) renderTrackDialog();
-  renderMatrixModal();
+  // Click anywhere on a track row to toggle v
+  const rowEl = e.target.closest('tr[data-mx-row]');
+  if (rowEl) {
+    const r = rowByNo(mx.rowNo);
+    if (!r) return;
+    const t = r.tracks.find(x => x.id === Number(rowEl.dataset.mxRow));
+    if (!t) return;
+    t.done = !t.done;
+    refreshAnno(r);
+    render();
+    renderMatrixModal(true);
+  }
 });
 
 matrixDlg.addEventListener('close', () => {
   mx.rowNo = null;
   mx.sheets = [];
+  render();
 });
 
+$('#clusterApply').addEventListener('click', applyCluster);
+$('#clusterInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); applyCluster(); }
+});
 $('#mxSearch').addEventListener('input', e => {
   mx.query = e.target.value;
-  renderMatrixModal();
+  renderMatrixModal(false);
 });
 $('#mxDownloadBtn').addEventListener('click', () => downloadJobExcel(rowByNo(mx.rowNo)));
 $('#mxUpdateBtn').addEventListener('click', () => triggerExcelUpdate(mx.rowNo));
@@ -1261,7 +1524,7 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 
 const linkPop = $('#linkPopover');
 let lpRowNo = null;
-let lpMode = null;       // 'preview' | 'edit' | null
+let lpMode = null;
 let lpAnchor = null;
 let lpHideTimer = null;
 
@@ -1404,7 +1667,7 @@ function openExcelMenu(rowNo, anchor){
         <span>Preview Matrix</span>
       </button>
       <button type="button" class="xm-btn" data-xm-open ${hasFile ? '' : 'disabled'}
-        title="${hasFile ? 'Download and open in Excel' : 'Attach the .xlsx file once in this browser to enable download'}">
+        title="${hasFile ? 'Download .xlsx with synced v ticks' : 'Attach the .xlsx file once in this browser to enable download'}">
         <span>Download .xlsx</span>
       </button>
       <button type="button" class="xm-btn" data-xm-update>
@@ -1514,7 +1777,7 @@ function cell(col, r){
 
     case 'progress': {
       const pct = pctOf(r);
-      return `<button type="button" class="issue-btn" data-tracks="${r.no}" title="Open track checklist & QC file">` +
+      return `<button type="button" class="issue-btn" data-tracks="${r.no}" title="Open Matrix & tick tracks">` +
                `${fmt(doneCount(r))} / ${fmt(trackCount(r))}</button>` +
              `<span class="bar${pct >= 100 ? ' done' : ''}"><i style="width:${pct.toFixed(1)}%"></i></span>` +
              `<span class="pct">${pct.toFixed(0)}%</span>`;
@@ -1589,124 +1852,6 @@ function render(){
   renderPills();
   renderTable();
   saveData();
-}
-
-/* ----- Track checklist dialog ----- */
-
-function setStatus(msg){
-  $('#clusterStatus').textContent = msg;
-}
-
-function renderTrackDialog(){
-  const r = currentRow();
-  if (!r) return;
-  const n = trackCount(r);
-  const d = doneCount(r);
-
-  $('#trkTitle').textContent = `Tracks · Job ${r.job || r.no}`;
-  $('#trkSub').textContent = n
-    ? `Done ${d} / ${n} · Left ${n - d} · ${cuboidsOf(r)} cuboids`
-    : 'No tracks yet. Attach the QC file.';
-
-  if (!n) {
-    $('#trkLeft').textContent = '';
-  } else if (d === n) {
-    $('#trkLeft').textContent = 'All tracks done ✓';
-  } else {
-    $('#trkLeft').textContent = 'Left: ' + r.tracks.filter(t => !t.done).map(t => t.id).join(', ');
-  }
-
-  $('#trkChips').innerHTML = r.tracks.map(t =>
-    `<label class="chip${t.done ? ' on' : ''}" title="${esc(t.cls)} · ${t.cuboids} cuboids">` +
-    `<input type="checkbox" data-track="${t.id}"${t.done ? ' checked' : ''}>${t.id}</label>`).join('') ||
-    `<span class="muted">No tracks in the file yet.</span>`;
-
-  const clusters = r.clusters || [];
-  $('#trkLog').innerHTML = clusters.length
-    ? clusters.map((c, i) =>
-        `<div class="logitem"><span><b>${i + 1}.</b> ${esc(fmtDate(c.at))} · ${c.ids.join(' ')}</span>` +
-        `<button type="button" class="btn danger small" data-cluster-del="${esc(c.id)}">×</button></div>`).join('')
-    : `<div class="muted">No clusters yet. Type IDs above and press Tick.</div>`;
-
-  const hasStoredFile = !!(r.source && r.source.fileKey);
-  $('#previewMatrixBtn').disabled = !(hasStoredFile || n > 0);
-  const openBtn = $('#openExcelBtn');
-  openBtn.disabled = !hasStoredFile;
-  openBtn.title = hasStoredFile
-    ? `Download ${r.source.name}`
-    : 'Attach/update the .xlsx file once in this browser to enable download';
-
-  $('#excelMeta').textContent = r.source
-    ? `${r.source.name} (${fmtDate(r.source.importedAt) || 'imported'}) · Updating keeps existing ticks.`
-    : 'Re-reading the file keeps the ticks for IDs that are still in it.';
-}
-
-function openTracks(no){
-  closeLinkPopover();
-  closeExcelMenu();
-  openRowNo = no;
-  $('#clusterInput').value = '';
-  setStatus('');
-  renderTrackDialog();
-  $('#trkDlg').showModal();
-}
-
-function applyCluster(){
-  const r = currentRow();
-  if (!r) return;
-  if (!r.tracks.length) { setStatus('Attach the QC file first.'); return; }
-
-  const input = $('#clusterInput');
-  const nums = [...new Set(input.value.split(/[\s,;]+/).filter(t => /^\d+$/.test(t)).map(Number))];
-  if (!nums.length) { setStatus('Type track IDs separated by spaces, e.g. 65 48 32 47 2 1'); return; }
-
-  const byId = new Map(r.tracks.map(t => [t.id, t]));
-  const found = [], missing = [];
-  let newly = 0;
-
-  nums.forEach(n => {
-    const t = byId.get(n);
-    if (!t) { missing.push(n); return; }
-    found.push(n);
-    if (!t.done) { t.done = true; newly++; }
-  });
-
-  if (found.length) {
-    r.clusters = r.clusters || [];
-    r.clusters.push({
-      id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6),
-      ids: found,
-      at: nowLocal(),
-    });
-  }
-  refreshAnno(r);
-  input.value = '';
-
-  let msg = `Ticked ${newly}`;
-  if (found.length > newly) msg += `, ${found.length - newly} were already done`;
-  if (missing.length) msg += `. Not in the file: ${missing.join(', ')}`;
-  setStatus(msg);
-
-  render();
-  renderTrackDialog();
-}
-
-function deleteCluster(cid){
-  const r = currentRow();
-  if (!r) return;
-  const entry = (r.clusters || []).find(c => c.id === cid);
-  if (!entry) return;
-  if (!confirm(`Remove cluster "${entry.ids.join(' ')}" from the log? Those IDs are unticked unless another cluster has them.`)) return;
-
-  const others = new Set((r.clusters || []).filter(c => c.id !== cid).flatMap(c => c.ids));
-  const byId = new Map(r.tracks.map(t => [t.id, t]));
-  entry.ids.forEach(id => {
-    if (!others.has(id) && byId.has(id)) byId.get(id).done = false;
-  });
-  r.clusters = r.clusters.filter(c => c.id !== cid);
-  refreshAnno(r);
-  render();
-  renderTrackDialog();
 }
 
 /* ----- Notes dialog ----- */
@@ -1852,7 +1997,7 @@ async function createJob(){
     await excelStore.put(fileKey, pendingImport.file);
   }
 
-  DATA.push({
+  const row = {
     no,
     batch: $('#newBatch').value.trim(),
     task: $('#newTask').value.trim(),
@@ -1867,7 +2012,9 @@ async function createJob(){
     link: '',
     assignedAt: nowLocal(),
     annoDoneAt: '',
-  });
+  };
+  refreshAnno(row);
+  DATA.push(row);
   pendingImport = null;
 
   ui.states.clear();
@@ -1928,7 +2075,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-action],[data-toggle],[data-delete],[data-notes],[data-tracks]');
   if (!b) return;
 
-  if (b.dataset.tracks !== undefined) { openTracks(Number(b.dataset.tracks)); return; }
+  if (b.dataset.tracks !== undefined) { openMatrixPreview(Number(b.dataset.tracks)); return; }
   if (b.dataset.notes !== undefined)  { openNotes(Number(b.dataset.notes)); return; }
   if (b.dataset.delete !== undefined) { deleteJob(Number(b.dataset.delete)); return; }
   if (b.dataset.action === 'add-job') { openNewJob(); return; }
@@ -1987,37 +2134,6 @@ document.addEventListener('change', e => {
   render();
 });
 
-// Track checklist dialog
-const trkDlg = $('#trkDlg');
-
-trkDlg.addEventListener('change', e => {
-  const cb = e.target.closest('input[data-track]');
-  const r = currentRow();
-  if (!cb || !r) return;
-  const t = r.tracks.find(x => x.id === Number(cb.dataset.track));
-  if (!t) return;
-  t.done = cb.checked;
-  refreshAnno(r);
-  render();
-  renderTrackDialog();
-});
-
-trkDlg.addEventListener('click', e => {
-  if (e.target.closest('[data-close]')) { trkDlg.close(); return; }
-  const del = e.target.closest('[data-cluster-del]');
-  if (del) deleteCluster(del.dataset.clusterDel);
-});
-
-trkDlg.addEventListener('close', () => { openRowNo = null; render(); });
-
-$('#clusterApply').addEventListener('click', applyCluster);
-$('#clusterInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); applyCluster(); }
-});
-$('#previewMatrixBtn').addEventListener('click', () => openMatrixPreview(openRowNo));
-$('#openExcelBtn').addEventListener('click', () => downloadJobExcel(currentRow()));
-$('#attachBtn').addEventListener('click', () => triggerExcelUpdate(openRowNo));
-
 $('#attachFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   e.target.value = '';
@@ -2033,10 +2149,6 @@ $('#attachFile').addEventListener('change', async e => {
 
     mergeImport(r, parsed, newKey);
     render();
-    if (trkDlg.open && openRowNo === r.no) {
-      renderTrackDialog();
-      setStatus(`Read ${parsed.tracks.length} tracks, ${parsed.frames} frames, ${parsed.tracks.reduce((a, t) => a + t.cuboids, 0)} cuboids.`);
-    }
     if (matrixDlg.open && mx.rowNo === r.no) {
       openMatrixPreview(r.no);
     }
@@ -2090,8 +2202,10 @@ $('#newFile').addEventListener('change', async e => {
     const parsed = await parseQcFile(file);
     pendingImport = { ...parsed, file };
     const cuboids = parsed.tracks.reduce((a, t) => a + t.cuboids, 0);
+    const ticked = parsed.tracks.filter(t => t.done).length;
     $('#newPreview').textContent =
-      `${parsed.tracks.length} tracks · ${parsed.frames} frames · ${cuboids} cuboids`;
+      `${parsed.tracks.length} tracks · ${parsed.frames} frames · ${cuboids} cuboids` +
+      (ticked ? ` · ${ticked} already ticked` : '');
     if (!$('#newBatch').value && parsed.batchHint) $('#newBatch').value = parsed.batchHint;
     if (!$('#newTask').value && parsed.taskHint) $('#newTask').value = parsed.taskHint;
     $('#createJob').disabled = false;
