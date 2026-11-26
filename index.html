@@ -325,13 +325,9 @@
   </div>
   <div class="dlg-body">
     <div class="row">
-      <button class="btn primary" id="pickFolderBtn" type="button">Choose job folder (reads task, job and name)</button>
+      <button class="btn primary" id="pickFolderBtn" type="button">Choose job folder (reads task, job, name and link)</button>
     </div>
     <input type="file" id="newFolderPick" webkitdirectory directory multiple hidden>
-    <div class="sub">Or pick only the .xlsx file. The job number is not in the file, so type it in Job.</div>
-    <label class="field">QC file (.xlsx)
-      <input type="file" id="newFile" accept=".xlsx">
-    </label>
     <div class="sub" id="newPreview"></div>
     <label class="field">Folder or file name (optional)
       <input id="newFolder" type="text" placeholder="e.g. batch4/3594 - 4920 - Dung">
@@ -2188,7 +2184,6 @@ function openNewJob(){
   closeLinkPopover();
   closeExcelMenu();
   pendingImport = null;
-  $('#newFile').value = '';
   $('#newBatch').value = '';
   $('#newTask').value = '';
   $('#newJob').value = '';
@@ -2468,10 +2463,6 @@ async function loadNewFile(file){
   }
 }
 
-$('#newFile').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (file) loadNewFile(file);
-});
 
 // Folder picker: the browser gives the path of every file inside the chosen folder,
 // so the parent folder name ("3594 - 4920 - Dung") is read automatically.
