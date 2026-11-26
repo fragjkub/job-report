@@ -1487,8 +1487,8 @@ function renderMatrixGrid(r, sheet){
   $('#mxFilterPills').innerHTML = [
     ['all', 'All', totalCount],
     ['undone', 'Undone', undoneCount],
-    ['symbols', 'With symbols', symbolCount],
-    ['gaps', 'Has gaps', gapCount],
+    ['symbols', 'Symbols', symbolCount],
+    ['gaps', 'Gaps', gapCount],
   ].map(([id, label, count]) =>
     `<button type="button" class="pill small${mx.filter === id ? ' on' : ''}" data-mx-filter="${id}">${label} <b>${count}</b></button>`
   ).join('');
