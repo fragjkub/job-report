@@ -325,9 +325,10 @@
   </div>
   <div class="dlg-body">
     <div class="row">
-      <button class="btn" id="pickFolderBtn" type="button">Choose job folder (reads the job number automatically)</button>
+      <button class="btn primary" id="pickFolderBtn" type="button">Choose job folder (reads task, job and name)</button>
     </div>
     <input type="file" id="newFolderPick" webkitdirectory directory multiple hidden>
+    <div class="sub">Or pick only the .xlsx file. The job number is not in the file, so type it in Job.</div>
     <label class="field">QC file (.xlsx)
       <input type="file" id="newFile" accept=".xlsx">
     </label>
@@ -339,7 +340,7 @@
     <div class="grid4">
       <label class="field">Batch <input id="newBatch" type="text"></label>
       <label class="field">Task <input id="newTask" type="text"></label>
-      <label class="field">Job <input id="newJob" type="text"></label>
+      <label class="field">Job <input id="newJob" type="text" placeholder="e.g. 4920"></label>
       <label class="field">Name <input id="newPerson" type="text"></label>
       <label class="field">QC <select id="newQc"></select></label>
     </div>
@@ -2503,10 +2504,20 @@ function applyNewJobHints(){
   if (task)   $('#newTask').value   = task;
   if (job)    $('#newJob').value    = job;
   if (person) $('#newPerson').value = person;
-  const link = cvatJobUrl($('#newTask').value.trim(), $('#newJob').value.trim());
-  $('#newLinkPreview').textContent = link
-    ? `Link: ${link}`
-    : 'Link will be created once task and job are known.';
+  const taskNow = $('#newTask').value.trim();
+  const jobVal = $('#newJob').value.trim();
+  const link = cvatJobUrl(taskNow, jobVal);
+  const preview = $('#newLinkPreview');
+  if (link) {
+    preview.textContent = `Link: ${link}`;
+    preview.style.color = '';
+  } else if (!jobVal) {
+    preview.textContent = 'Job number not found. Choose the job folder (e.g. 3594 - 4920 - Dung), or type the job number in Job.';
+    preview.style.color = '#B42318';
+  } else {
+    preview.textContent = 'Task number not found. Type it in Task.';
+    preview.style.color = '#B42318';
+  }
 }
 
 $('#newFolder').addEventListener('input', applyNewJobHints);
