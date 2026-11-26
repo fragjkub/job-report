@@ -975,6 +975,8 @@ async function parseQcFile(file){
     });
   }
 
+  const summary = await readSheetFromContext(zip, ctx, 'Summary');
+  const pathCell = summary && summary.get(3) && summary.get(3).get('B');
   const path = pathCell && typeof pathCell.v === 'string' ? pathCell.v : '';
   const pathHint = parseFolderInfo(path);
   const nameHint = parseFolderInfo(file.name);
