@@ -234,6 +234,7 @@
       <button id="restore" class="btn" type="button">Restore</button>
       <input id="restoreFile" type="file" accept="application/json,.json" hidden>
       <input id="attachFile" type="file" accept=".xlsx" hidden>
+      <input id="attachFolder" type="file" webkitdirectory directory multiple hidden>
     </div>
   </header>
 
@@ -339,6 +340,7 @@
       <label class="field">Batch <input id="newBatch" type="text"></label>
       <label class="field">Task <input id="newTask" type="text"></label>
       <label class="field">Job <input id="newJob" type="text"></label>
+      <label class="field">Name <input id="newPerson" type="text"></label>
       <label class="field">QC <select id="newQc"></select></label>
     </div>
   </div>
@@ -380,7 +382,6 @@
 
 const CONFIG = {
   title: 'My jobs',
-  reportName: 'Dũng',   // name written in the report header
   openLabel: 'Open',    // text shown in the "Open link" column
 };
 
@@ -587,6 +588,7 @@ function migrate(rows){
     clusters: Array.isArray(r.clusters) ? r.clusters : [],
     notes: Array.isArray(r.notes) ? r.notes : [],
     link: r.link || '',
+    person: r.person || '',
     assignedAt: r.assignedAt || '',
     annoDoneAt: r.annoDoneAt || '',
   }));
@@ -990,6 +992,7 @@ async function parseQcFile(file){
     batchHint: pathHint.batch || nameHint.batch,
     taskHint:  pathHint.task  || nameHint.task,
     jobHint:   pathHint.job   || nameHint.job,
+    personHint: pathHint.person || nameHint.person,
   };
 }
 
@@ -1111,7 +1114,7 @@ async function syncTicksIntoWorkbook(file, r){
   });
 }
 
-function mergeImport(r, parsed, fileKey){
+function mergeImport(r, parsed, fileKey, folder = null){
   const old = new Map((r.tracks || []).map(t => [t.id, t]));
   r.tracks = parsed.tracks.map(t => ({
     ...t,
@@ -1119,10 +1122,21 @@ function mergeImport(r, parsed, fileKey){
   }));
   r.frames = parsed.frames;
   r.source = { name: parsed.source, importedAt: nowLocal(), fileKey: fileKey || null };
-  if (!r.batch && parsed.batchHint) r.batch = parsed.batchHint;
-  if (!r.task && parsed.taskHint) r.task = parsed.taskHint;
-  if (!r.job && parsed.jobHint) r.job = parsed.jobHint;
-  if (!r.link) r.link = cvatJobUrl(r.task, r.job);
+
+  // Names from a picked folder win over what was stored before
+  const f = folder || {};
+  if (f.batch)  r.batch  = f.batch;
+  if (f.task)   r.task   = f.task;
+  if (f.job)    r.job    = f.job;
+  if (f.person) r.person = f.person;
+
+  // Otherwise only fill what is still empty
+  if (!r.batch  && parsed.batchHint)  r.batch  = parsed.batchHint;
+  if (!r.task   && parsed.taskHint)   r.task   = parsed.taskHint;
+  if (!r.job    && parsed.jobHint)    r.job    = parsed.jobHint;
+  if (!r.person && parsed.personHint) r.person = parsed.personHint;
+
+  if (!r.link || f.task || f.job) r.link = cvatJobUrl(r.task, r.job) || r.link;
   refreshAnno(r);
 }
 
@@ -1152,7 +1166,7 @@ async function downloadJobExcel(r){
 function triggerExcelUpdate(rowNo){
   attachTargetRowNo = rowNo;
   closeExcelMenu();
-  $('#attachFile').click();
+  $('#attachFolder').click();
 }
 
 /* =========================================================
@@ -2009,14 +2023,20 @@ function buildReport(){
 
   const groups = new Map();
   DATA.forEach(r => {
-    const key = String(r.batch ?? '').trim() || '–';
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(r);
+    const batch = String(r.batch ?? '').trim() || '–';
+    const person = String(r.person ?? '').trim();
+    const key = batch + '|' + person;
+    if (!groups.has(key)) groups.set(key, { batch, person, rows: [] });
+    groups.get(key).rows.push(r);
   });
 
-  const batches = [...groups.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  const blocks = batches.map(b =>
-    [`Batch ${b} - ${CONFIG.reportName}`, ...groups.get(b).map(reportLine)].join('\n'));
+  const sorted = [...groups.values()].sort((a, b) =>
+    a.batch.localeCompare(b.batch, undefined, { numeric: true }) || a.person.localeCompare(b.person));
+
+  const blocks = sorted.map(g => [
+    g.person ? `Batch ${g.batch} - ${g.person}` : `Batch ${g.batch}`,
+    ...g.rows.map(reportLine),
+  ].join('\n'));
 
   const tracks  = DATA.reduce((a, r) => a + trackCount(r), 0);
   const cuboids = DATA.reduce((a, r) => a + cuboidsOf(r), 0);
@@ -2084,6 +2104,7 @@ async function createJob(){
     task: $('#newTask').value.trim(),
     job: $('#newJob').value.trim(),
     qc: $('#newQc').value || null,
+    person: $('#newPerson').value.trim(),
     qcState: '',
     source: { name: pendingImport.source, importedAt: nowLocal(), fileKey: pendingImport.file ? fileKey : null },
     frames: pendingImport.frames,
@@ -2246,6 +2267,34 @@ $('#attachFile').addEventListener('change', async e => {
   }
 });
 
+$('#attachFolder').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  const r = rowByNo(attachTargetRowNo);
+  attachTargetRowNo = null;
+  if (!files.length || !r) return;
+
+  const xlsx = files.filter(f => /\.xlsx$/i.test(f.name));
+  if (!xlsx.length) { alert('No .xlsx file found in that folder.'); return; }
+  const pick = xlsx.find(f => /qc/i.test(f.name)) || xlsx[0];
+  const relPath = pick.webkitRelativePath || files[0].webkitRelativePath || '';
+  const folder = parseFolderInfo(relPath);
+
+  try {
+    const parsed = await parseQcFile(pick);
+    const oldKey = r.source && r.source.fileKey;
+    const newKey = makeFileKey();
+    await excelStore.put(newKey, pick);
+    if (oldKey) excelStore.del(oldKey);
+
+    mergeImport(r, parsed, newKey, folder);
+    render();
+    if (matrixDlg.open && mx.rowNo === r.no) openMatrixPreview(r.no);
+  } catch (err) {
+    alert('Could not read this file: ' + err.message);
+  }
+});
+
 // Notes dialog
 const dlg = $('#notesDlg');
 
@@ -2329,12 +2378,14 @@ $('#newFolderPick').addEventListener('change', async e => {
 function applyNewJobHints(){
   const typed = parseFolderInfo($('#newFolder').value);
   const fromFile = pendingImport || {};
-  const batch = typed.batch || fromFile.batchHint || '';
-  const task  = typed.task  || fromFile.taskHint  || '';
-  const job   = typed.job   || fromFile.jobHint   || '';
-  if (batch) $('#newBatch').value = batch;
-  if (task)  $('#newTask').value  = task;
-  if (job)   $('#newJob').value   = job;
+  const batch  = typed.batch  || fromFile.batchHint  || '';
+  const task   = typed.task   || fromFile.taskHint   || '';
+  const job    = typed.job    || fromFile.jobHint    || '';
+  const person = typed.person || fromFile.personHint || '';
+  if (batch)  $('#newBatch').value  = batch;
+  if (task)   $('#newTask').value   = task;
+  if (job)    $('#newJob').value    = job;
+  if (person) $('#newPerson').value = person;
   const link = cvatJobUrl($('#newTask').value.trim(), $('#newJob').value.trim());
   $('#newLinkPreview').textContent = link
     ? `Link: ${link}`
