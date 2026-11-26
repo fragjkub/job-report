@@ -1411,30 +1411,57 @@ function applyCluster(){
   if (!nums.length) { setStatus('Type track IDs separated by spaces, e.g. 65 48 32 47 2 1'); return; }
 
   const byId = new Map(r.tracks.map(t => [t.id, t]));
-  const found = [], missing = [];
-  let newly = 0;
+  const inEarlierCluster = new Set((r.clusters || []).flatMap(c => c.ids));
+
+  const missing = [];          // not in the file
+  const alreadyTicked = [];    // already ticked
+  const alreadyInCluster = []; // already in an earlier cluster (but not ticked now)
+  const toTick = [];           // new IDs
 
   nums.forEach(n => {
     const t = byId.get(n);
     if (!t) { missing.push(n); return; }
-    found.push(n);
-    if (!t.done) { t.done = true; newly++; }
+    if (t.done) { alreadyTicked.push(n); return; }
+    if (inEarlierCluster.has(n)) { alreadyInCluster.push(n); return; }
+    toTick.push(n);
   });
 
-  if (found.length) {
-    r.clusters = r.clusters || [];
-    r.clusters.push({
-      id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6),
-      ids: found,
-      at: nowLocal(),
-    });
+  // If some IDs were already handled, ask before ticking the rest
+  if ((alreadyTicked.length || alreadyInCluster.length) && toTick.length) {
+    const lines = [];
+    if (alreadyTicked.length)    lines.push(`Already ticked: ${alreadyTicked.join(' ')}`);
+    if (alreadyInCluster.length) lines.push(`Already in an earlier cluster: ${alreadyInCluster.join(' ')}`);
+    const ok = confirm(
+      `Some IDs were already handled:\n${lines.join('\n')}\n\n` +
+      `Tick only the ${toTick.length} new ID(s): ${toTick.join(' ')}?`
+    );
+    if (!ok) { setStatus('Nothing ticked.'); return; }
   }
+
+  // Nothing new: explain and keep the typed text so you can edit it
+  if (!toTick.length) {
+    let msg = 'Nothing new to tick.';
+    if (alreadyTicked.length)    msg += ` Already ticked: ${alreadyTicked.join(' ')}.`;
+    if (alreadyInCluster.length) msg += ` Already in a cluster: ${alreadyInCluster.join(' ')}.`;
+    if (missing.length)          msg += ` Not in file: ${missing.join(' ')}.`;
+    setStatus(msg);
+    return;
+  }
+
+  toTick.forEach(n => { byId.get(n).done = true; });
+  r.clusters = r.clusters || [];
+  r.clusters.push({
+    id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6),
+    ids: toTick,
+    at: nowLocal(),
+  });
   refreshAnno(r);
   input.value = '';
 
-  let msg = `Ticked ${newly}`;
-  if (found.length > newly) msg += `, ${found.length - newly} already done`;
-  if (missing.length) msg += ` · Not in file: ${missing.join(', ')}`;
+  let msg = `Ticked ${toTick.length}`;
+  if (alreadyTicked.length)    msg += ` · skipped, already ticked: ${alreadyTicked.join(' ')}`;
+  if (alreadyInCluster.length) msg += ` · skipped, already in cluster: ${alreadyInCluster.join(' ')}`;
+  if (missing.length)          msg += ` · not in file: ${missing.join(' ')}`;
   setStatus(msg);
 
   render();
@@ -1511,7 +1538,7 @@ $('#mxDownloadBtn').addEventListener('click', () => downloadJobExcel(rowByNo(mx.
 $('#mxUpdateBtn').addEventListener('click', () => triggerExcelUpdate(mx.rowNo));
 
 /* =========================================================
-   NOTION-STYLE LINK POPOVER (hover on "Open" to preview/add)
+   NOTION-STYLE LINK POPOVER
    ========================================================= */
 
 const ICON_GLOBE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
