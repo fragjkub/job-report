@@ -987,12 +987,26 @@ async function parseQcFile(file){
   const pathHint = parseFolderInfo(path);
   const nameHint = parseFolderInfo(file.name);
 
+  // JobInfo sheet, if an earlier version of this app saved one in the file
+  const infoSheet = await readSheetFromContext(zip, ctx, JOBINFO_SHEET);
+  const info = {};
+  if (infoSheet) {
+    for (const [, cols] of infoSheet) {
+      const k = cols.get('A') && cols.get('A').v;
+      const v = cols.get('B') && cols.get('B').v;
+      if (typeof k === 'string' && v !== null && v !== undefined && v !== '') {
+        info[k.trim().toLowerCase()] = String(v).trim();
+      }
+    }
+  }
+
   return {
     frames, tracks, source: file.name,
-    batchHint: pathHint.batch || nameHint.batch,
-    taskHint:  pathHint.task  || nameHint.task,
-    jobHint:   pathHint.job   || nameHint.job,
-    personHint: pathHint.person || nameHint.person,
+    batchHint:  info.batch  || pathHint.batch  || nameHint.batch,
+    taskHint:   info.task   || pathHint.task   || nameHint.task,
+    jobHint:    info.job    || pathHint.job    || nameHint.job,
+    personHint: info.name   || pathHint.person || nameHint.person,
+    linkHint:   info.link   || '',
   };
 }
 
@@ -1036,12 +1050,106 @@ function setInlineCell(doc, ns, rowEl, rowNum, colLetter, colNum, text){
   }
 }
 
+const JOBINFO_SHEET = 'JobInfo';
+
+function xmlEsc(s){
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function jobInfoRows(r){
+  return [
+    ['Field', 'Value'],
+    ['Batch', r.batch || ''],
+    ['Task', r.task || ''],
+    ['Job', r.job || ''],
+    ['Name', r.person || ''],
+    ['Link', r.link || cvatJobUrl(r.task, r.job) || ''],
+    ['QC', r.qc || ''],
+    ['Frames', r.frames || 0],
+    ['TrackID', trackCount(r)],
+    ['Cuboids', cuboidsOf(r)],
+    ['Ticked', doneCount(r)],
+    ['Assigned', r.assignedAt || ''],
+    ['Completed', r.annoDoneAt || ''],
+  ];
+}
+
+function jobInfoSheetXml(rows){
+  const body = rows.map((row, i) => {
+    const rn = i + 1;
+    const cells = row.map((v, j) => {
+      const ref = numToCol(j + 1) + rn;
+      if (typeof v === 'number') return `<c r="${ref}"><v>${v}</v></c>`;
+      return `<c r="${ref}" t="inlineStr"><is><t>${xmlEsc(v)}</t></is></c>`;
+    }).join('');
+    return `<row r="${rn}">${cells}</row>`;
+  }).join('');
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<cols><col min="1" max="1" width="14" customWidth="1"/><col min="2" max="2" width="48" customWidth="1"/></cols>' +
+    `<sheetData>${body}</sheetData></worksheet>`;
+}
+
+async function writeJobInfoSheet(zip, ctx, r){
+  const xml = jobInfoSheetXml(jobInfoRows(r));
+
+  // Sheet already exists: just replace its contents
+  const existing = ctx.sheetList.find(s => s.name === JOBINFO_SHEET);
+  if (existing) { zip.file(existing.path, xml); return; }
+
+  // Otherwise add a new sheet to the workbook package
+  let n = 1;
+  while (zip.file(`xl/worksheets/sheet${n}.xml`)) n++;
+  const path = `xl/worksheets/sheet${n}.xml`;
+  zip.file(path, xml);
+
+  const relNs = 'http://schemas.openxmlformats.org/package/2006/relationships';
+  const mainNs = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const ctNs = 'http://schemas.openxmlformats.org/package/2006/content-types';
+  const rid = 'rIdJobInfo';
+
+  const wbDoc = new DOMParser().parseFromString(await zip.file('xl/workbook.xml').async('string'), 'application/xml');
+  const relsDoc = new DOMParser().parseFromString(await zip.file('xl/_rels/workbook.xml.rels').async('string'), 'application/xml');
+  const ctDoc = new DOMParser().parseFromString(await zip.file('[Content_Types].xml').async('string'), 'application/xml');
+
+  const rel = relsDoc.createElementNS(relNs, 'Relationship');
+  rel.setAttribute('Id', rid);
+  rel.setAttribute('Type', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet');
+  rel.setAttribute('Target', `worksheets/sheet${n}.xml`);
+  relsDoc.documentElement.appendChild(rel);
+
+  const sheetIds = [...wbDoc.getElementsByTagName('sheet')].map(s => Number(s.getAttribute('sheetId')) || 0);
+  const sheetEl = wbDoc.createElementNS(mainNs, 'sheet');
+  sheetEl.setAttribute('name', JOBINFO_SHEET);
+  sheetEl.setAttribute('sheetId', String(Math.max(0, ...sheetIds) + 1));
+  sheetEl.setAttribute('r:id', rid);
+  wbDoc.getElementsByTagName('sheets')[0].appendChild(sheetEl);
+
+  const ov = ctDoc.createElementNS(ctNs, 'Override');
+  ov.setAttribute('PartName', '/' + path);
+  ov.setAttribute('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml');
+  ctDoc.documentElement.appendChild(ov);
+
+  zip.file('xl/workbook.xml', new XMLSerializer().serializeToString(wbDoc));
+  zip.file('xl/_rels/workbook.xml.rels', new XMLSerializer().serializeToString(relsDoc));
+  zip.file('[Content_Types].xml', new XMLSerializer().serializeToString(ctDoc));
+}
+
+function zipOut(zip){
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    compression: 'DEFLATE',
+  });
+}
+
 async function syncTicksIntoWorkbook(file, r){
   if (typeof JSZip === 'undefined') return file;
   const zip = await JSZip.loadAsync(file);
   const ctx = await readWorkbookContext(zip);
+  await writeJobInfoSheet(zip, ctx, r);
   const matInfo = ctx.sheetList.find(s => s.name === 'Matrix');
-  if (!matInfo) return file;
+  if (!matInfo) return zipOut(zip);
 
   const sheetDoc = await loadXml(zip, matInfo.path);
   const ns = sheetDoc.documentElement.namespaceURI || 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -1066,12 +1174,12 @@ async function syncTicksIntoWorkbook(file, r){
       break;
     }
   }
-  if (!headerRowEl) return file;
+  if (!headerRowEl) return zipOut(zip);
 
   const frameColNums = [...headerColsMap.entries()]
     .filter(([, cell]) => typeof cell.v === 'number' && Number.isInteger(cell.v))
     .map(([col]) => colToNum(col));
-  if (!frameColNums.length) return file;
+  if (!frameColNums.length) return zipOut(zip);
 
   const maxFrameColNum = Math.max(...frameColNums);
   const tickCol = findTickCol(headerColsMap, maxFrameColNum);
@@ -1135,6 +1243,7 @@ function mergeImport(r, parsed, fileKey, folder = null){
   if (!r.task   && parsed.taskHint)   r.task   = parsed.taskHint;
   if (!r.job    && parsed.jobHint)    r.job    = parsed.jobHint;
   if (!r.person && parsed.personHint) r.person = parsed.personHint;
+  if (!r.link && parsed.linkHint) r.link = parsed.linkHint;
 
   if (!r.link || f.task || f.job) r.link = cvatJobUrl(r.task, r.job) || r.link;
   refreshAnno(r);
@@ -2094,15 +2203,14 @@ async function createJob(){
   if (!pendingImport) return;
   const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
   const fileKey = makeFileKey();
-  if (pendingImport.file) {
-    await excelStore.put(fileKey, pendingImport.file);
-  }
+  const task = $('#newTask').value.trim();
+  const job = $('#newJob').value.trim();
 
   const row = {
     no,
     batch: $('#newBatch').value.trim(),
-    task: $('#newTask').value.trim(),
-    job: $('#newJob').value.trim(),
+    task,
+    job,
     qc: $('#newQc').value || null,
     person: $('#newPerson').value.trim(),
     qcState: '',
@@ -2111,11 +2219,18 @@ async function createJob(){
     tracks: pendingImport.tracks.map(t => ({ ...t })),
     clusters: [],
     notes: [],
-    link: cvatJobUrl($('#newTask').value.trim(), $('#newJob').value.trim()),
+    link: cvatJobUrl(task, job),
     assignedAt: nowLocal(),
     annoDoneAt: '',
   };
   refreshAnno(row);
+
+  if (pendingImport.file) {
+    // Save the Excel with this job's info (JobInfo sheet and ticks) written into it
+    const blob = await syncTicksIntoWorkbook(pendingImport.file, row).catch(() => pendingImport.file);
+    await excelStore.put(fileKey, blob);
+  }
+
   DATA.push(row);
   pendingImport = null;
 
@@ -2284,10 +2399,12 @@ $('#attachFolder').addEventListener('change', async e => {
     const parsed = await parseQcFile(pick);
     const oldKey = r.source && r.source.fileKey;
     const newKey = makeFileKey();
-    await excelStore.put(newKey, pick);
-    if (oldKey) excelStore.del(oldKey);
 
     mergeImport(r, parsed, newKey, folder);
+    const blob = await syncTicksIntoWorkbook(pick, r).catch(() => pick);
+    await excelStore.put(newKey, blob);
+    if (oldKey) excelStore.del(oldKey);
+
     render();
     if (matrixDlg.open && mx.rowNo === r.no) openMatrixPreview(r.no);
   } catch (err) {
