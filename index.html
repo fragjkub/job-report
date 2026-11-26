@@ -327,6 +327,10 @@
       <input type="file" id="newFile" accept=".xlsx">
     </label>
     <div class="sub" id="newPreview"></div>
+    <label class="field">Folder or file name (optional)
+      <input id="newFolder" type="text" placeholder="e.g. batch4/3594 - 4920 - Dung">
+    </label>
+    <div class="sub" id="newLinkPreview"></div>
     <div class="grid4">
       <label class="field">Batch <input id="newBatch" type="text"></label>
       <label class="field">Task <input id="newTask" type="text"></label>
@@ -455,6 +459,39 @@ const excelStore = (() => {
 })();
 
 const makeFileKey = () => 'xlsx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+/* =========================================================
+   CVAT LINKS AND NAMES FROM FOLDER / FILE NAMES
+   e.g. "batch4/3594 - 4920 - Dung" -> batch 4, task 3594, job 4920, name Dung
+   ========================================================= */
+
+const CVAT_BASE = 'https://cvat-dc.vantixapps.net';
+
+function cvatJobUrl(task, job){
+  return task && job ? `${CVAT_BASE}/tasks/${task}/jobs/${job}` : '';
+}
+
+function parseFolderInfo(text){
+  const out = { batch: '', task: '', job: '', person: '' };
+  const s = String(text || '');
+  const bm = /batch[\s_-]*(\d+)/i.exec(s);
+  if (bm) out.batch = bm[1];
+  const parts = s.split(/[\\/]+/).map(p => p.trim()).filter(Boolean);
+  for (const part of parts) {
+    const m = /^(\d{3,6})\s*-\s*(\d{3,8})(?:\s*-\s*(.+))?$/.exec(part);
+    if (m) {
+      out.task = m[1];
+      out.job = m[2];
+      out.person = (m[3] || '').replace(/\.[a-z0-9]+$/i, '').trim();
+      break;
+    }
+  }
+  if (!out.task) {
+    const tm = /(?:^|[\\/])(\d{3,6})[\\/]annotations/i.exec(s);
+    if (tm) out.task = tm[1];
+  }
+  return out;
+}
 
 /* =========================================================
    DATA + SAVING
@@ -938,16 +975,16 @@ async function parseQcFile(file){
     });
   }
 
-  let batchHint = '', taskHint = '';
-  const summary = await readSheetFromContext(zip, ctx, 'Summary');
-  const pathCell = summary && summary.get(3) && summary.get(3).get('B');
   const path = pathCell && typeof pathCell.v === 'string' ? pathCell.v : '';
-  const bm = /batch[_\s-]*(\d+)/i.exec(path);
-  const tm = /[\\/](\d{3,6})[\\/]annotations/i.exec(path);
-  if (bm) batchHint = bm[1];
-  if (tm) taskHint = tm[1];
+  const pathHint = parseFolderInfo(path);
+  const nameHint = parseFolderInfo(file.name);
 
-  return { frames, tracks, source: file.name, batchHint, taskHint };
+  return {
+    frames, tracks, source: file.name,
+    batchHint: pathHint.batch || nameHint.batch,
+    taskHint:  pathHint.task  || nameHint.task,
+    jobHint:   pathHint.job   || nameHint.job,
+  };
 }
 
 function setInlineCell(doc, ns, rowEl, rowNum, colLetter, colNum, text){
@@ -1076,6 +1113,10 @@ function mergeImport(r, parsed, fileKey){
   }));
   r.frames = parsed.frames;
   r.source = { name: parsed.source, importedAt: nowLocal(), fileKey: fileKey || null };
+  if (!r.batch && parsed.batchHint) r.batch = parsed.batchHint;
+  if (!r.task && parsed.taskHint) r.task = parsed.taskHint;
+  if (!r.job && parsed.jobHint) r.job = parsed.jobHint;
+  if (!r.link) r.link = cvatJobUrl(r.task, r.job);
   refreshAnno(r);
 }
 
@@ -2017,6 +2058,8 @@ function openNewJob(){
   $('#newJob').value = '';
   $('#newQc').value = '';
   $('#newPreview').textContent = 'Choose the file to read tracks, frames and cuboids.';
+  $('#newFolder').value = '';
+  $('#newLinkPreview').textContent = '';
   $('#createJob').disabled = true;
   $('#newDlg').showModal();
 }
@@ -2041,7 +2084,7 @@ async function createJob(){
     tracks: pendingImport.tracks.map(t => ({ ...t })),
     clusters: [],
     notes: [],
-    link: '',
+    link: cvatJobUrl($('#newTask').value.trim(), $('#newJob').value.trim()),
     assignedAt: nowLocal(),
     annoDoneAt: '',
   };
@@ -2246,8 +2289,7 @@ $('#newFile').addEventListener('change', async e => {
     $('#newPreview').textContent =
       `${parsed.tracks.length} tracks · ${parsed.frames} frames · ${cuboids} cuboids` +
       (ticked ? ` · ${ticked} already ticked` : '');
-    if (!$('#newBatch').value && parsed.batchHint) $('#newBatch').value = parsed.batchHint;
-    if (!$('#newTask').value && parsed.taskHint) $('#newTask').value = parsed.taskHint;
+    applyNewJobHints();
     $('#createJob').disabled = false;
   } catch (err) {
     pendingImport = null;
@@ -2255,6 +2297,22 @@ $('#newFile').addEventListener('change', async e => {
   }
 });
 
+function applyNewJobHints(){
+  const typed = parseFolderInfo($('#newFolder').value);
+  const fromFile = pendingImport || {};
+  const batch = typed.batch || fromFile.batchHint || '';
+  const task  = typed.task  || fromFile.taskHint  || '';
+  const job   = typed.job   || fromFile.jobHint   || '';
+  if (batch) $('#newBatch').value = batch;
+  if (task)  $('#newTask').value  = task;
+  if (job)   $('#newJob').value   = job;
+  const link = cvatJobUrl($('#newTask').value.trim(), $('#newJob').value.trim());
+  $('#newLinkPreview').textContent = link
+    ? `Link: ${link}`
+    : 'Link will be created once task and job are known.';
+}
+
+$('#newFolder').addEventListener('input', applyNewJobHints);
 $('#createJob').addEventListener('click', createJob);
 newDlg.addEventListener('click', e => {
   if (e.target.closest('[data-close]')) newDlg.close();
