@@ -212,6 +212,7 @@
   table.mx td.mx-cell{min-width:28px;height:25px;padding:2px 4px;font-weight:600;font-size:11.5px}
   table.mx td.mx-cell.mx-present{background:#DCE8FF;color:#1D4ED8}
   table.mx td.mx-cell.mx-sym{box-shadow:inset 0 0 0 1px rgba(180,35,24,.35)}
+  table.mx td.mx-cell.mx-gap{background:repeating-linear-gradient(45deg,#FFF4D6 0 4px,#FFFFFF 4px 8px)}
   table.mx.mx-generic th,table.mx.mx-generic td{text-align:left;padding:6px 10px;max-width:420px;overflow:hidden;text-overflow:ellipsis}
 
   button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1418,6 +1419,17 @@ function renderMatrixModal(preserveScroll = true){
   }
 }
 
+function findGapIdx(cells){
+  const on = cells.map(c => !!(c.filled || (c.v !== null && String(c.v).trim() !== '')));
+  const first = on.indexOf(true);
+  if (first === -1) return [];
+  let last = on.length - 1;
+  while (last > first && !on[last]) last--;
+  const gaps = [];
+  for (let i = first; i <= last; i++) if (!on[i]) gaps.push(i);
+  return gaps;
+}
+
 function renderMatrixGrid(r, sheet){
   const byId = new Map((r.tracks || []).map(t => [t.id, t]));
   const q = mx.query.trim().toLowerCase();
@@ -1435,7 +1447,7 @@ function renderMatrixGrid(r, sheet){
         const present = t.first !== null && t.last !== null && fc.label >= t.first && fc.label <= t.last;
         return { filled: present, bg: null, fg: null, bold: false, v: null };
       });
-      return { id: t.id, cls: t.cls, track: t, cells, hasSymbol: false };
+      return { id: t.id, cls: t.cls, track: t, cells, hasSymbol: false, gaps: [] };
     });
   } else {
     let headerRow = null;
@@ -1463,18 +1475,20 @@ function renderMatrixGrid(r, sheet){
         if (c.v !== null && String(c.v).trim() !== '') hasSymbol = true;
         return c;
       });
-      dataRows.push({ id: idCell.v, cls, track: byId.get(idCell.v) || null, cells, hasSymbol });
+      dataRows.push({ id: idCell.v, cls, track: byId.get(idCell.v) || null, cells, hasSymbol, gaps: findGapIdx(cells) });
     }
   }
 
   const totalCount = dataRows.length;
   const undoneCount = dataRows.filter(dr => !dr.track || !dr.track.done).length;
   const symbolCount = dataRows.filter(dr => dr.hasSymbol).length;
+  const gapCount = dataRows.filter(dr => dr.gaps.length > 0).length;
 
   $('#mxFilterPills').innerHTML = [
     ['all', 'All', totalCount],
     ['undone', 'Undone', undoneCount],
     ['symbols', 'With symbols', symbolCount],
+    ['gaps', 'Has gaps', gapCount],
   ].map(([id, label, count]) =>
     `<button type="button" class="pill small${mx.filter === id ? ' on' : ''}" data-mx-filter="${id}">${label} <b>${count}</b></button>`
   ).join('');
@@ -1482,6 +1496,7 @@ function renderMatrixGrid(r, sheet){
   const filtered = dataRows.filter(dr => {
     if (mx.filter === 'undone' && dr.track && dr.track.done) return false;
     if (mx.filter === 'symbols' && !dr.hasSymbol) return false;
+    if (mx.filter === 'gaps' && dr.gaps.length === 0) return false;
     if (q) {
       const syms = dr.cells.map(c => c.v ?? '').join(' ');
       const hay = `${dr.id} ${dr.cls} ${syms}`.toLowerCase();
@@ -1494,6 +1509,7 @@ function renderMatrixGrid(r, sheet){
     `<tr>` +
     `<th class="sticky-0">Track</th>` +
     `<th class="sticky-1">Class</th>` +
+    `<th title="Empty frames between first and last frame (interpolate these)">Gap</th>` +
     frameList.map(f => `<th>${esc(f.label)}</th>`).join('') +
     `<th class="sticky-v" title="Click anywhere on a row to toggle v">v</th>` +
     `</tr>`;
@@ -1516,6 +1532,7 @@ function renderMatrixGrid(r, sheet){
           }
           if (c.bold) styles.push('font-weight:700');
           if (hasText) classes.push('mx-sym');
+          if (dr.gaps.includes(idx)) classes.push('mx-gap');
 
           const tip = `Track ${dr.id} · Frame ${frameList[idx].label}` + (hasText ? ` · ${c.v}` : '');
           return `<td class="${classes.join(' ')}"${styles.length ? ` style="${styles.join(';')}"` : ''} title="${esc(tip)}">${hasText ? esc(c.v) : ''}</td>`;
@@ -1524,11 +1541,12 @@ function renderMatrixGrid(r, sheet){
         return `<tr class="${rowClass}"${clickable}>` +
           `<td class="mx-meta sticky-0">${dr.id}</td>` +
           `<td class="mx-meta sticky-1" title="${esc(dr.cls)}">${esc(dr.cls)}</td>` +
+          `<td class="mx-meta" title="${esc(dr.gaps.map(i => frameList[i].label).join(', '))}">${dr.gaps.length || ''}</td>` +
           frameTds +
           `<td class="mx-v sticky-v">${isDone ? 'v' : ''}</td>` +
           `</tr>`;
       }).join('')
-    : `<tr><td colspan="${frameList.length + 3}" class="empty">No tracks match this filter.</td></tr>`;
+    : `<tr><td colspan="${frameList.length + 4}" class="empty">No tracks match this filter.</td></tr>`;
 
   $('#mxWrap').innerHTML = `<table class="mx"><thead>${headHtml}</thead><tbody>${bodyHtml}</tbody></table>`;
   $('#mxFootInfo').textContent = `Showing ${filtered.length} of ${totalCount} tracks · Click anywhere on a row to tick/untick v.`;
