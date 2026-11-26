@@ -323,6 +323,10 @@
     <button type="button" class="btn small" data-close>Close</button>
   </div>
   <div class="dlg-body">
+    <div class="row">
+      <button class="btn" id="pickFolderBtn" type="button">Choose job folder (reads the job number automatically)</button>
+    </div>
+    <input type="file" id="newFolderPick" webkitdirectory directory multiple hidden>
     <label class="field">QC file (.xlsx)
       <input type="file" id="newFile" accept=".xlsx">
     </label>
@@ -2278,9 +2282,7 @@ const newDlg = $('#newDlg');
 $('#newQc').innerHTML = `<option value="">–</option>` +
   QC_REVIEWERS.map(n => `<option>${esc(n)}</option>`).join('');
 
-$('#newFile').addEventListener('change', async e => {
-  const file = e.target.files[0];
-  if (!file) return;
+async function loadNewFile(file){
   $('#newPreview').textContent = 'Reading file…';
   $('#createJob').disabled = true;
   try {
@@ -2297,6 +2299,31 @@ $('#newFile').addEventListener('change', async e => {
     pendingImport = null;
     $('#newPreview').textContent = 'Could not read this file: ' + err.message;
   }
+}
+
+$('#newFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) loadNewFile(file);
+});
+
+// Folder picker: the browser gives the path of every file inside the chosen folder,
+// so the parent folder name ("3594 - 4920 - Dung") is read automatically.
+$('#pickFolderBtn').addEventListener('click', () => $('#newFolderPick').click());
+
+$('#newFolderPick').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  if (!files.length) return;
+
+  const xlsx = files.filter(f => /\.xlsx$/i.test(f.name));
+  if (!xlsx.length) {
+    $('#newPreview').textContent = 'No .xlsx file found in that folder.';
+    return;
+  }
+  const pick = xlsx.find(f => /qc/i.test(f.name)) || xlsx[0];
+  $('#newFolder').value = pick.webkitRelativePath || files[0].webkitRelativePath || '';
+  applyNewJobHints();
+  await loadNewFile(pick);
 });
 
 function applyNewJobHints(){
