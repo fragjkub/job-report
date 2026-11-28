@@ -344,7 +344,7 @@
   </div>
   <div class="dlg-foot">
     <span class="sub">Assigned time is recorded when you create the job.</span>
-    <button class="btn primary" id="createJob" type="button" disabled>Create job</button>
+    <button class="btn primary" id="createJob" type="button" hidden>Create job</button>
   </div>
 </dialog>
 
@@ -1487,8 +1487,8 @@ function renderMatrixGrid(r, sheet){
   $('#mxFilterPills').innerHTML = [
     ['all', 'All', totalCount],
     ['undone', 'Undone', undoneCount],
-    ['symbols', 'Symbols', symbolCount],
-    ['gaps', 'Gaps', gapCount],
+    ['symbols', 'With symbols', symbolCount],
+    ['gaps', 'Has gaps', gapCount],
   ].map(([id, label, count]) =>
     `<button type="button" class="pill small${mx.filter === id ? ' on' : ''}" data-mx-filter="${id}">${label} <b>${count}</b></button>`
   ).join('');
@@ -2486,20 +2486,93 @@ async function loadNewFile(file){
 // so the parent folder name ("3594 - 4920 - Dung") is read automatically.
 $('#pickFolderBtn').addEventListener('click', () => $('#newFolderPick').click());
 
-$('#newFolderPick').addEventListener('change', async e => {
-  const files = [...e.target.files];
-  e.target.value = '';
-  if (!files.length) return;
-
+async function addJobsFromFolder(files){
   const xlsx = files.filter(f => /\.xlsx$/i.test(f.name));
   if (!xlsx.length) {
     $('#newPreview').textContent = 'No .xlsx file found in that folder.';
     return;
   }
-  const pick = xlsx.find(f => /qc/i.test(f.name)) || xlsx[0];
-  $('#newFolder').value = pick.webkitRelativePath || files[0].webkitRelativePath || '';
-  applyNewJobHints();
-  await loadNewFile(pick);
+
+  // One job per "task - job - name" folder. If a job folder holds several .xlsx, prefer the qc file.
+  const byJob = new Map();
+  const noJobFolder = [];
+  for (const f of xlsx) {
+    const rel = f.webkitRelativePath || f.name;
+    const info = parseFolderInfo(rel);
+    if (!info.task || !info.job) { noJobFolder.push(rel); continue; }
+    const key = info.task + '|' + info.job;
+    if (!byJob.has(key)) byJob.set(key, []);
+    byJob.get(key).push({ f, info });
+  }
+  const entries = [...byJob.values()].map(list =>
+    list.find(x => /qc/i.test(x.f.name)) || list[0]);
+
+  const typedBatch = $('#newBatch').value.trim();
+  const added = [];
+  const duplicates = [];
+  const failed = [];
+  $('#newPreview').textContent = `Adding ${entries.length} job(s)…`;
+
+  for (const { f, info } of entries) {
+    const label = `${info.task} - ${info.job}`;
+    if (DATA.some(r => String(r.task) === info.task && String(r.job) === info.job)) {
+      duplicates.push(label);
+      continue;
+    }
+    try {
+      const parsed = await parseQcFile(f);
+      const fileKey = makeFileKey();
+      const no = DATA.reduce((m, r) => Math.max(m, r.no), 0) + 1;
+      const row = {
+        no,
+        batch: info.batch || typedBatch,
+        task: info.task,
+        job: info.job,
+        qc: null,
+        person: info.person,
+        qcState: '',
+        source: { name: f.name, importedAt: nowLocal(), fileKey },
+        frames: parsed.frames,
+        tracks: parsed.tracks.map(t => ({ ...t })),
+        clusters: [],
+        notes: [],
+        link: cvatJobUrl(info.task, info.job),
+        assignedAt: nowLocal(),
+        annoDoneAt: '',
+      };
+      refreshAnno(row);
+
+      // Save the Excel with this job's info written into it
+      const blob = await syncTicksIntoWorkbook(f, row).catch(() => f);
+      await excelStore.put(fileKey, blob);
+
+      DATA.push(row);
+      added.push(`${label} (${parsed.tracks.length} tracks)`);
+    } catch (err) {
+      failed.push(`${label}: ${err.message}`);
+    }
+  }
+
+  ui.states.clear();
+  ui.qcs.clear();
+  ui.query = '';
+  $('#q').value = '';
+  $('#newDlg').close();
+  render();
+
+  const lines = [`Added ${added.length} job(s).`];
+  if (added.length) lines.push(added.join('\n'));
+  if (duplicates.length) lines.push(`Already in the list, skipped: ${duplicates.join(', ')}`);
+  if (noJobFolder.length) lines.push(`No "task - job - name" folder, skipped: ${noJobFolder.join('\n')}`);
+  if (failed.length) lines.push(`Could not read: ${failed.join('\n')}`);
+  alert(lines.join('\n\n'));
+}
+
+$('#newFolderPick').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  if (!files.length) return;
+  await addJobsFromFolder(files);
 });
 
 function applyNewJobHints(){
